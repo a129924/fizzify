@@ -1,0 +1,35 @@
+[project]
+name = "fizzify"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "a129924", email = "a129924@gmail.com"},
+]
+dependencies = [
+    "fastapi[standard]>=0.115.6",
+    "sqlalchemy>=2.0.36",
+    "strawberry-graphql[fastapi]>=0.246.2",
+]
+requires-python = "==3.10.*"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[tool.pdm]
+distribution = false
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+    "W191",  # indentation contains tabs
+]
