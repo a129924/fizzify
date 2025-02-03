@@ -18,6 +18,12 @@ license = {text = "MIT"}
 
 [tool.pdm]
 distribution = false
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "pytest-mock>=3.14.0",
+    "pytest>=8.3.4",
+]
 [tool.ruff.lint]
 select = [
     "E",  # pycodestyle errors
