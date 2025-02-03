@@ -1,5 +1,6 @@
 from collections.abc import Generator
 from contextlib import contextmanager
+from functools import cached_property
 
 from sqlalchemy import Engine
 from sqlalchemy.orm import Session
@@ -21,12 +22,19 @@ class SyncSessionManager(BaseManager):
         """
         return ORMUtils.get_engine(self.config)
 
+    @cached_property
+    @override
+    def engine(self) -> Engine:
+        return ORMUtils.get_engine(self.config)
+
     @contextmanager
     @override
     def get_session(self) -> Generator[Session, None, None]:
         """
         Get the session for the synchronous session.
         """
-        session = ORMUtils.get_sync_session(self.get_engine())()
-        yield session
-        session.close()
+        session = ORMUtils.get_sync_session(self.engine)()
+        try:
+            yield session
+        finally:
+            session.close()
