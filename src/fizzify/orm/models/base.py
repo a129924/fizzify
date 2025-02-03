@@ -2,6 +2,7 @@ from collections.abc import Sequence
 from typing import Any, Literal
 
 from sqlalchemy import Engine
+from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.orm import Session as SqlAlchemySession
