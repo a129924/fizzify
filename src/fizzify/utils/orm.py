@@ -20,7 +20,7 @@ class ORMUtils:
     ) -> Engine:
         return create_engine(
             config.generate_url(),
-            **engine_config.model_dump(),
+            **engine_config.model_dump(exclude_none=True),
         )
 
     @classmethod
@@ -31,7 +31,7 @@ class ORMUtils:
     ) -> AsyncEngine:
         return create_async_engine(
             config.generate_url(),
-            **engine_config.model_dump(),
+            **engine_config.model_dump(exclude_none=True),
         )
 
     @classmethod
