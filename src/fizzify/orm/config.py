@@ -1,13 +1,26 @@
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel
+from sqlalchemy.engine.interfaces import IsolationLevel
 from typing_extensions import override
+
+
+class ORMEngineConfig(BaseModel):
+    connect_args: dict[str, Any]
+    echo: bool = False
+    pool_size: int = 10
+    max_overflow: int = 20
+    pool_timeout: int = 30
+    pool_use_lifo: bool = True
+    pool_recycle: int = 3600
+    pool_pre_ping: bool = True
+    isolation_level: IsolationLevel
 
 
 class ORMUrlBaseConfig(BaseModel):
     """Base class for ORM URL configuration."""
 
-    driver: str
+    dialect: str
     database: str
 
     def generate_url(self) -> str:

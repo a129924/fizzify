@@ -20,12 +20,12 @@ class SyncSessionManager(BaseManager):
         """
         Get the engine for the synchronous session.
         """
-        return ORMUtils.get_engine(self.config)
+        return ORMUtils.get_engine(self.config, self.engine_config)
 
     @cached_property
     @override
     def engine(self) -> Engine:
-        return ORMUtils.get_engine(self.config)
+        return ORMUtils.get_engine(self.config, self.engine_config)
 
     @contextmanager
     @override

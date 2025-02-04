@@ -12,12 +12,12 @@ from .base import BaseManager
 class AsyncSessionManager(BaseManager):
     @override
     def get_engine(self) -> AsyncEngine:
-        return ORMUtils.get_async_engine(self.config)
+        return ORMUtils.get_async_engine(self.config, self.engine_config)
 
     @cached_property
     @override
     def engine(self) -> AsyncEngine:
-        return ORMUtils.get_async_engine(self.config)
+        return ORMUtils.get_async_engine(self.config, self.engine_config)
 
     @asynccontextmanager
     @override
