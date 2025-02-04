@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Generator
 from contextlib import contextmanager
 from functools import cached_property
@@ -20,6 +21,8 @@ class SyncSessionManager(BaseManager):
         """
         Get the engine for the synchronous session.
         """
+        logging.info(f"Getting engine for {self.config.database}")
+
         return ORMUtils.get_engine(self.config, self.engine_config)
 
     @cached_property
@@ -33,8 +36,12 @@ class SyncSessionManager(BaseManager):
         """
         Get the session for the synchronous session.
         """
+        logging.info(f"Getting session for {self.config.database}")
+
         session = ORMUtils.get_sync_session(self.engine)()
         try:
             yield session
         finally:
+            logging.info(f"Closing session for {self.config.database}")
+
             session.close()

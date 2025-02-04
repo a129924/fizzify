@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Sequence
 from typing import Any, Literal
 
@@ -16,6 +17,8 @@ class SyncBase(Base):
     @classmethod
     @override
     def __create_table__(cls, engine: Engine) -> None:
+        logging.info(f"Creating table for {cls.__name__}")
+
         cls.metadata.create_all(engine)
 
     @classmethod
@@ -42,6 +45,7 @@ class SyncBase(Base):
 
     def save(self, session: SqlAlchemySession) -> Self:
         try:
+            logging.info(f"Saving {self.__class__.__name__}")
             session.add(self)
             session.commit()
 
@@ -58,6 +62,8 @@ class SyncBase(Base):
         session: SqlAlchemySession,
         filters: Sequence[ExpressionElementRole[bool]],
     ) -> Self | None:
+        logging.info(f"Finding one {cls.__name__}")
+
         results = cls._find(session, filters)
 
         return results[0] if results else None
@@ -69,6 +75,8 @@ class SyncBase(Base):
         session: SqlAlchemySession,
         filters: Sequence[ExpressionElementRole[bool]],
     ) -> Sequence[Self]:
+        logging.info(f"Finding all {cls.__name__}")
+
         return cls._find(session, filters)
 
     @classmethod
@@ -85,9 +93,12 @@ class SyncBase(Base):
         Returns:
             bool: True if the update was successful, False otherwise.
         """
+        logging.info(f"Updating {cls.__name__}")
+
         try:
             return cls._update(session, filters, values)
         except Exception as e:
+            logging.error(f"Error updating {cls.__name__}: {e}")
             session.rollback()
 
             raise e
@@ -97,11 +108,15 @@ class SyncBase(Base):
     def delete_one(
         cls, session: SqlAlchemySession, filters: Sequence[ExpressionElementRole[bool]]
     ) -> Literal[True]:
+        logging.info(f"Deleting one {cls.__name__}")
+
         try:
             session.execute(cls._generate_statement("delete", filters))
             session.commit()
 
             return True
         except Exception as e:
+            logging.error(f"Error deleting one {cls.__name__}: {e}")
             session.rollback()
+
             raise e
