@@ -3,7 +3,7 @@ from datetime import datetime
 from pytest import fixture
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.fizzify.orm.config import ORMSqliteConfig
+from src.fizzify.orm.config import ORMEngineSqliteConfig, ORMSqliteConfig
 from src.fizzify.orm.models.sync import SyncBase
 from src.fizzify.orm.session.sync import SyncSessionManager
 
@@ -17,14 +17,21 @@ class User(SyncBase):
 @fixture
 def sqlite_config() -> ORMSqliteConfig:
     return ORMSqliteConfig(
-        driver="sqlite",
+        dialect="sqlite",
         database=":memory:",
     )
 
 
 @fixture
-def sync_session_manager(sqlite_config: ORMSqliteConfig) -> SyncSessionManager:
-    return SyncSessionManager(config=sqlite_config)
+def sqlite_engine_config() -> ORMEngineSqliteConfig:
+    return ORMEngineSqliteConfig()
+
+
+@fixture
+def sync_session_manager(
+    sqlite_config: ORMSqliteConfig, sqlite_engine_config: ORMEngineSqliteConfig
+) -> SyncSessionManager:
+    return SyncSessionManager(config=sqlite_config, engine_config=sqlite_engine_config)
 
 
 def test_sqlite_config(sqlite_config: ORMSqliteConfig):
