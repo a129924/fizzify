@@ -1,12 +1,12 @@
 from typing import Any, Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.engine.interfaces import IsolationLevel
 from typing_extensions import override
 
 
 class ORMEngineConfig(BaseModel):
-    connect_args: dict[str, Any]
+    connect_args: dict[str, Any] | None = None
     echo: bool = False
     pool_size: int = 10
     max_overflow: int = 20
@@ -14,7 +14,28 @@ class ORMEngineConfig(BaseModel):
     pool_use_lifo: bool = True
     pool_recycle: int = 3600
     pool_pre_ping: bool = True
-    isolation_level: IsolationLevel
+    isolation_level: IsolationLevel = "SERIALIZABLE"
+
+
+class ORMEngineSqliteConfig(ORMEngineConfig):
+    """
+    Configuration for the SQLite ORM.
+    """
+
+    # is not support field
+    max_overflow: int = Field(default=20, exclude=True)
+    pool_timeout: int = Field(default=30, exclude=True)
+    pool_use_lifo: bool = Field(default=True, exclude=True)
+
+    isolation_level: IsolationLevel = "SERIALIZABLE"
+
+
+class ORMEnginePostgresConfig(ORMEngineConfig):
+    """
+    Configuration for the PostgreSQL ORM.
+    """
+
+    isolation_level: IsolationLevel = "SERIALIZABLE"
 
 
 class ORMUrlBaseConfig(BaseModel):
