@@ -2,10 +2,10 @@ from collections.abc import Sequence
 from typing import Any, Literal
 
 from sqlalchemy import Engine
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy.orm import Session as SqlAlchemySession
+from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
+from sqlalchemy.sql import Delete, Select, Update
 from sqlalchemy.sql._typing import _DMLColumnArgument
 from sqlalchemy.sql.roles import ExpressionElementRole
 from sqlalchemy.types import Integer
@@ -13,6 +13,8 @@ from typing_extensions import Self
 
 
 class Base(DeclarativeBase):
+    __abstract__ = True
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
     @declared_attr.directive
@@ -23,89 +25,64 @@ class Base(DeclarativeBase):
         return f"{self.__class__.__name__}(id={self.id})"
 
     @classmethod
-    def __create_table__(cls, engine: Engine) -> None:
-        cls.metadata.create_all(engine)
+    def __create_table__(cls, engine: Engine | AsyncEngine) -> None:
+        raise NotImplementedError("__create_table__ should be overridden")
 
     @classmethod
-    def _find(
-        cls, session: SqlAlchemySession, filters: Sequence[ExpressionElementRole[bool]]
-    ) -> Sequence[Self]:
-        from sqlalchemy import select
-
-        stmt = select(cls).filter(*filters)
-
-        return session.execute(stmt).scalars().all()
-
-    @classmethod
-    def _update(
+    def _generate_statement(
         cls,
-        session: SqlAlchemySession,
+        mode: Literal["select", "update", "delete"],
         filters: Sequence[ExpressionElementRole[bool]],
-        values: dict[_DMLColumnArgument, Any],
-    ) -> Literal[True]:
-        from sqlalchemy import update
+        values: dict[_DMLColumnArgument, Any] | None = None,
+    ) -> Select | Update | Delete:
+        match mode:
+            case "select":
+                from sqlalchemy import select
 
-        stmt = update(cls).filter(*filters).values(values)
+                return select(cls).filter(*filters)
+            case "update" if values is not None:
+                from sqlalchemy import update
 
-        session.execute(stmt)
-        session.commit()
+                return update(cls).filter(*filters).values(values)
+            case "delete":
+                from sqlalchemy import delete
 
-        return True
-
-    def save(self, session: SqlAlchemySession) -> Self:
-        try:
-            session.add(self)
-            session.commit()
-
-        except Exception as e:
-            session.rollback()
-            raise e
-
-        return self
+                return delete(cls).filter(*filters)
+            case _:
+                raise ValueError(f"Invalid mode: {mode} or values: {values}")
 
     @classmethod
     def find_one(
-        cls, session: SqlAlchemySession, filters: Sequence[ExpressionElementRole[bool]]
+        cls,
+        session: Session | AsyncSession,
+        filters: Sequence[ExpressionElementRole[bool]],
     ) -> Self | None:
-        results = cls._find(session, filters)
-
-        return results[0] if results else None
+        raise NotImplementedError("find should be overridden")
 
     @classmethod
     def find_all(
-        cls, session: SqlAlchemySession, filters: Sequence[ExpressionElementRole[bool]]
+        cls,
+        session: Session | AsyncSession,
+        filters: Sequence[ExpressionElementRole[bool]],
     ) -> Sequence[Self]:
-        return cls._find(session, filters)
+        raise NotImplementedError("find_all should be overridden")
+
+    def save(self, session: Session | AsyncSession) -> Self:
+        raise NotImplementedError("save should be overridden")
 
     @classmethod
     def update(
         cls,
-        session: SqlAlchemySession,
+        session: Session | AsyncSession,
         filters: Sequence[ExpressionElementRole[bool]],
         values: dict[_DMLColumnArgument, Any],
     ) -> Literal[True]:
-        """
-        Update the database with the given filters and values.
-
-        Returns:
-            bool: True if the update was successful, False otherwise.
-        """
-        try:
-            return cls._update(session, filters, values)
-        except Exception as e:
-            session.rollback()
-
-            raise e
+        raise NotImplementedError("update should be overridden")
 
     @classmethod
     def delete_one(
-        cls, session: SqlAlchemySession, filters: Sequence[ExpressionElementRole[bool]]
+        cls,
+        session: Session | AsyncSession,
+        filters: Sequence[ExpressionElementRole[bool]],
     ) -> Literal[True]:
-        try:
-            session.delete(cls.find_one(session, filters))
-            session.commit()
-
-            return True
-        except Exception as e:
-            session.rollback()
-            raise e
+        raise NotImplementedError("delete_one should be, overridden")
