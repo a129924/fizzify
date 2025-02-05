@@ -11,4 +11,4 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     sub: str | None = None
     scopes: list[str] = []
-    expires_at: datetime | None = None
+    expired_at: datetime | None = None
