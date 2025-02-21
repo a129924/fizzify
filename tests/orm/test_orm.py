@@ -120,7 +120,7 @@ def test_sync_delete(sync_session_manager: SyncSessionManager):
         assert User.find_one(session, filters=[User.name == "John"]) is None
 
 
-def test_unique_user(sync_session_manager: SyncSessionManager):
+def test_unique_user_insert_or_ignore(sync_session_manager: SyncSessionManager):
     user = UniqueUser(name="John", age=20, created_at=datetime.now())
 
     with sync_session_manager.get_session() as session:
@@ -132,6 +132,16 @@ def test_unique_user(sync_session_manager: SyncSessionManager):
         user2.insert_or_ignore(session)
 
         assert UniqueUser.find_one(session, filters=[UniqueUser.name == "John"]) == user
+
+        filter_user2 = UniqueUser.find_one(
+            session, filters=[UniqueUser.name == "Andrew"]
+        )
+        assert filter_user2 is not None
+        assert filter_user2.name == "Andrew"
+        assert filter_user2.age == 21
+
+        update_user2 = UniqueUser(name="Andrew", age=22, created_at=datetime.now())
+        update_user2.insert_or_ignore(session)
 
         filter_user2 = UniqueUser.find_one(
             session, filters=[UniqueUser.name == "Andrew"]
