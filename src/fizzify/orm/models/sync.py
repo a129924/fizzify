@@ -124,6 +124,12 @@ class SyncBase(Base):
 
     @override
     def insert_or_ignore(self, session: SqlAlchemySession) -> Literal[True]:
+        """
+        Insert the object into the database if it doesn't exist, otherwise ignore it.
+
+        Returns:
+            bool: True if the insert or ignore was successful, False otherwise.
+        """
         try:
             session.execute(
                 self._generate_statement(
