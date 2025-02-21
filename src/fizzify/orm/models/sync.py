@@ -8,6 +8,7 @@ from sqlalchemy.sql._typing import _DMLColumnArgument
 from sqlalchemy.sql.roles import ExpressionElementRole
 from typing_extensions import Self, override
 
+from ...utils.orm import ORMUtils
 from .base import Base
 
 
@@ -25,7 +26,7 @@ class SyncBase(Base):
     def _find(
         cls, session: SqlAlchemySession, filters: Sequence[ExpressionElementRole[bool]]
     ) -> Sequence[Self]:
-        stmt = cls._generate_statement("select", filters)
+        stmt = cls._generate_statement("select", filters=filters)
 
         return session.execute(stmt).scalars().all()
 
@@ -36,7 +37,7 @@ class SyncBase(Base):
         filters: Sequence[ExpressionElementRole[bool]],
         values: dict[_DMLColumnArgument, Any],
     ) -> Literal[True]:
-        stmt = cls._generate_statement("update", filters, values)
+        stmt = cls._generate_statement("update", filters=filters, values=values)
 
         session.execute(stmt)
         session.commit()
@@ -111,12 +112,31 @@ class SyncBase(Base):
         logging.info(f"Deleting one {cls.__name__}")
 
         try:
-            session.execute(cls._generate_statement("delete", filters))
+            session.execute(cls._generate_statement("delete", filters=filters))
             session.commit()
 
             return True
         except Exception as e:
             logging.error(f"Error deleting one {cls.__name__}: {e}")
+            session.rollback()
+
+            raise e
+
+    @override
+    def insert_or_ignore(self, session: SqlAlchemySession) -> Literal[True]:
+        try:
+            session.execute(
+                self._generate_statement(
+                    "insert_or_ignore",
+                    values=ORMUtils.get_field_and_value(self),
+                    driver_name=ORMUtils.get_driver_name(session.bind.engine),  # type: ignore
+                )
+            )
+            session.commit()
+
+            return True
+        except Exception as e:
+            logging.error(f"Error inserting or ignoring {self.__class__.__name__}: {e}")
             session.rollback()
 
             raise e
