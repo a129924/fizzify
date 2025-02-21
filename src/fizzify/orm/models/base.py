@@ -5,11 +5,13 @@ from sqlalchemy import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
-from sqlalchemy.sql import Delete, Select, Update
+from sqlalchemy.sql import Delete, Insert, Select, Update
 from sqlalchemy.sql._typing import _DMLColumnArgument
 from sqlalchemy.sql.roles import ExpressionElementRole
 from sqlalchemy.types import Integer
 from typing_extensions import Self
+
+from ...utils.orm import ORMUtils
 
 
 class Base(DeclarativeBase):
@@ -31,23 +33,30 @@ class Base(DeclarativeBase):
     @classmethod
     def _generate_statement(
         cls,
-        mode: Literal["select", "update", "delete"],
-        filters: Sequence[ExpressionElementRole[bool]],
+        mode: Literal["select", "update", "delete", "insert_or_ignore"],
+        driver_name: str | None = None,
+        filters: Sequence[ExpressionElementRole[bool]] | None = None,
         values: dict[_DMLColumnArgument, Any] | None = None,
-    ) -> Select | Update | Delete:
+    ) -> Select | Update | Delete | Insert:
         match mode:
-            case "select":
+            case "select" if filters is not None:
                 from sqlalchemy import select
 
                 return select(cls).filter(*filters)
-            case "update" if values is not None:
+            case "update" if values is not None and filters is not None:
                 from sqlalchemy import update
 
                 return update(cls).filter(*filters).values(values)
-            case "delete":
+            case "delete" if filters is not None:
                 from sqlalchemy import delete
 
                 return delete(cls).filter(*filters)
+            case "insert_or_ignore" if values is not None and driver_name is not None:
+                return ORMUtils.get_insert_or_ignore_stmt(
+                    cls,
+                    values,
+                    driver_name=driver_name,
+                )
             case _:
                 raise ValueError(f"Invalid mode: {mode} or values: {values}")
 
@@ -86,3 +95,11 @@ class Base(DeclarativeBase):
         filters: Sequence[ExpressionElementRole[bool]],
     ) -> Literal[True]:
         raise NotImplementedError("delete_one should be, overridden")
+
+    @classmethod
+    def insert_or_ignore(
+        cls,
+        session: Session | AsyncSession,
+        values: dict[_DMLColumnArgument, Any],
+    ) -> Literal[True]:
+        raise NotImplementedError("insert_or_ignore should be overridden")
