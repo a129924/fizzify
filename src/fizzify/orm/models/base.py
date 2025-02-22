@@ -52,7 +52,7 @@ class Base(DeclarativeBase):
 
                 return delete(cls).filter(*filters)
             case "insert_or_ignore" if values is not None and driver_name is not None:
-                return ORMUtils.get_insert_or_ignore_stmt(
+                return ORMUtils.generate_insert_or_ignore_stmt(
                     cls,
                     values,
                     driver_name=driver_name,

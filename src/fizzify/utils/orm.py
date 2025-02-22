@@ -75,7 +75,7 @@ class ORMUtils:
         }
 
     @classmethod
-    def get_insert_or_ignore_stmt(
+    def generate_insert_or_ignore_stmt(
         cls,
         model: type[DeclarativeBase],
         values: dict[_DMLColumnArgument, Any],
