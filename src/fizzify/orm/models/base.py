@@ -4,11 +4,10 @@ from typing import Any, Literal
 from sqlalchemy import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Session
 from sqlalchemy.sql import Delete, Insert, Select, Update
 from sqlalchemy.sql._typing import _DMLColumnArgument
 from sqlalchemy.sql.roles import ExpressionElementRole
-from sqlalchemy.types import Integer
 from typing_extensions import Self
 
 from ...utils.orm import ORMUtils
@@ -17,14 +16,12 @@ from ...utils.orm import ORMUtils
 class Base(DeclarativeBase):
     __abstract__ = True
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-
     @declared_attr.directive
     def __tablename__(cls) -> str:
         return cls.__name__.lower()
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(id={self.id})"
+        return f"{self.__class__.__name__}"
 
     @classmethod
     def __create_table__(cls, engine: Engine | AsyncEngine) -> None:
@@ -33,7 +30,9 @@ class Base(DeclarativeBase):
     @classmethod
     def _generate_statement(
         cls,
-        mode: Literal["select", "update", "delete", "insert_or_ignore"],
+        mode: Literal[
+            "select", "update", "delete", "insert_or_ignore", "insert_or_update"
+        ],
         driver_name: str | None = None,
         filters: Sequence[ExpressionElementRole[bool]] | None = None,
         values: dict[_DMLColumnArgument, Any] | None = None,
@@ -53,6 +52,13 @@ class Base(DeclarativeBase):
                 return delete(cls).filter(*filters)
             case "insert_or_ignore" if values is not None and driver_name is not None:
                 return ORMUtils.generate_insert_or_ignore_stmt(
+                    cls,
+                    values,
+                    driver_name=driver_name,
+                )
+
+            case "insert_or_update" if values is not None and driver_name is not None:
+                return ORMUtils.generate_insert_or_update_stmt(
                     cls,
                     values,
                     driver_name=driver_name,
@@ -103,3 +109,11 @@ class Base(DeclarativeBase):
         values: dict[_DMLColumnArgument, Any],
     ) -> Literal[True]:
         raise NotImplementedError("insert_or_ignore should be overridden")
+
+    @classmethod
+    def insert_or_update(
+        cls,
+        session: Session | AsyncSession,
+        values: dict[_DMLColumnArgument, Any],
+    ) -> Literal[True]:
+        raise NotImplementedError("insert_or_update should be overridden")
