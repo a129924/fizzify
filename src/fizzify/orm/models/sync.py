@@ -146,3 +146,38 @@ class SyncBase(Base):
             session.rollback()
 
             raise e
+
+    @override
+    def insert_or_update(self, session: SqlAlchemySession) -> Literal[True]:
+        """
+        Insert the object into the database if it doesn't exist, otherwise update it.
+
+        Returns:
+            bool: True if the insert or update was successful, False otherwise.
+        """
+        values = ORMUtils.get_field_and_value(self)
+
+        # 打印 values 以進行調試
+        print(f"Values for insert_or_update: {values}")
+
+        if not values:
+            raise ValueError(
+                "The values dictionary must not be empty for insert_or_update."
+            )
+
+        try:
+            insert_stmt = self._generate_statement(
+                "insert_or_update",
+                values=values,
+                driver_name=ORMUtils.get_driver_name(session.bind.engine),  # type: ignore
+            )
+            print(f"Insert statement: {insert_stmt}")
+            session.execute(insert_stmt)
+            session.commit()
+
+            return True
+        except Exception as e:
+            logging.error(f"Error inserting or updating {self.__class__.__name__}: {e}")
+            session.rollback()
+
+            raise e
