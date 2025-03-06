@@ -11,13 +11,13 @@ from src.fizzify.utils.orm import ORMUtils
 
 
 class User(SyncBase):
-    name: Mapped[str]
+    name: Mapped[str] = mapped_column(primary_key=True)
     age: Mapped[int]
     created_at: Mapped[datetime] = mapped_column(default=datetime.now)
 
 
 class UniqueUser(SyncBase):
-    name: Mapped[str]
+    name: Mapped[str] = mapped_column(primary_key=True)
     age: Mapped[int]
     created_at: Mapped[datetime] = mapped_column(default=datetime.now)
     __table_args__ = (UniqueConstraint("name"),)
@@ -149,3 +149,18 @@ def test_unique_user_insert_or_ignore(sync_session_manager: SyncSessionManager):
         assert filter_user2 is not None
         assert filter_user2.name == "Andrew"
         assert filter_user2.age == 21
+
+
+def test_unique_user_insert_or_update(sync_session_manager: SyncSessionManager):
+    user = UniqueUser(name="John", age=20, created_at=datetime.now())
+
+    with sync_session_manager.get_session() as session:
+        user.__create_table__(sync_session_manager.engine)
+        user.save(session)
+
+        user1 = UniqueUser(name="John", age=21, created_at=datetime.now())
+        user1.insert_or_update(session)
+
+        filter_user1 = UniqueUser.find_one(session, filters=[UniqueUser.name == "John"])
+        assert filter_user1 is not None
+        assert filter_user1.age == 21
