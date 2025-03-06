@@ -93,3 +93,31 @@ class ORMUtils:
                 )
             case _:
                 raise ValueError(f"Unsupported database: {driver_name}")
+
+    @classmethod
+    def generate_insert_or_update_stmt(
+        cls,
+        model: type[DeclarativeBase],
+        values: dict[_DMLColumnArgument, Any],
+        driver_name: str,
+    ) -> Insert:
+        match driver_name:
+            case "sqlite":
+                from sqlalchemy.dialects.sqlite import insert
+
+                stmt = insert(model).values(values)
+                return stmt.on_conflict_do_update(  # type: ignore
+                    index_elements=ORMUtils.get_unique_constraint_fields(model),
+                    set_=values,
+                )
+
+            case "postgresql":
+                from sqlalchemy.dialects.postgresql import insert
+
+                stmt = insert(model).values()
+                return stmt.on_conflict_do_update(  # type: ignore
+                    index_elements=ORMUtils.get_unique_constraint_fields(model)
+                )
+
+            case _:
+                raise ValueError(f"Unsupported database: {driver_name}")
