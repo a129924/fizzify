@@ -23,6 +23,13 @@ class SyncBase(Base):
         cls.metadata.create_all(engine)
 
     @classmethod
+    @override
+    def __delete_table__(cls, engine: Engine) -> None:
+        logging.info(f"Deleting table for {cls.__name__}")
+
+        cls.metadata.drop_all(engine)
+
+    @classmethod
     def _find(
         cls, session: SqlAlchemySession, filters: Sequence[ExpressionElementRole[bool]]
     ) -> Sequence[Self]:
@@ -94,14 +101,15 @@ class SyncBase(Base):
         Returns:
             bool: True if the update was successful, False otherwise.
         """
-        logging.info(f"Updating {cls.__name__}")
+        logging.info(
+            f"Updating {cls.__name__} with filters: {filters} and values: {values}"
+        )
 
         try:
             return cls._update(session, filters, values)
         except Exception as e:
             logging.error(f"Error updating {cls.__name__}: {e}")
             session.rollback()
-
             raise e
 
     @classmethod
