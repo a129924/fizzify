@@ -1,3 +1,7 @@
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
 [project]
 name = "fizzify"
 version = "0.1.0"
@@ -12,11 +16,21 @@ dependencies = [
     "PyJWT>=2.10.1",
     "passlib>=1.7.4",
     "bcrypt>=4.2.1",
+    "aioodbc>=0.5.0",
+    "pyodbc>=5.2.0",
 ]
+
+
 requires-python = "==3.10.*"
 readme = "README.md"
 license = {text = "MIT"}
-
+[project.optional-dependencies]
+aioodbc = [
+    "aioodbc>=0.5.0",
+]
+pyodbc = [
+    "pyodbc>=5.2.0",
+]
 
 [tool.pdm]
 distribution = false
