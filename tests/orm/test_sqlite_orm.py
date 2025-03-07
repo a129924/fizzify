@@ -26,7 +26,6 @@ class UniqueUser(SyncBase):
 @fixture
 def sqlite_config() -> ORMSqliteConfig:
     return ORMSqliteConfig(
-        dialect="sqlite",
         database=":memory:",
     )
 
