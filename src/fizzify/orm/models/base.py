@@ -28,6 +28,10 @@ class Base(DeclarativeBase):
         raise NotImplementedError("__create_table__ should be overridden")
 
     @classmethod
+    def __delete_table__(cls, engine: Engine | AsyncEngine) -> None:
+        raise NotImplementedError("__delete_table__ should be overridden")
+
+    @classmethod
     def _generate_statement(
         cls,
         mode: Literal[
