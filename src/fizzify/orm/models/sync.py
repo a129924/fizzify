@@ -182,6 +182,34 @@ class SyncBase(Base):
 
             raise e
 
+    def _insert_or_update_by_stmt(self, session: SqlAlchemySession) -> Literal[True]:
+        stmt = self._generate_statement(
+            "insert_or_update",
+            values=ORMUtils.get_field_and_value(self),
+            driver_name=ORMUtils.get_driver_name(session.bind.engine),  # type: ignore
+        )
+        session.execute(stmt)
+
+        return True
+
+    def _insert_or_update_not_support(
+        self, session: SqlAlchemySession
+    ) -> Literal[True]:
+        unique_fields = ORMUtils.get_unique_constraint_fields(self.__class__)
+        is_exists = self.find_one(
+            session,
+            filters=[
+                getattr(self.__class__, field) == getattr(self, field)
+                for field in unique_fields
+            ],
+        )
+        if is_exists is None:
+            self.save(session)
+        else:
+            session.merge(self)
+
+        return True
+
     @override
     def insert_or_update(self, session: SqlAlchemySession) -> Literal[True]:
         """
@@ -197,14 +225,15 @@ class SyncBase(Base):
                 "The values dictionary must not be empty for insert_or_update."
             )
 
-        try:
-            insert_stmt = self._generate_statement(
-                "insert_or_update",
-                values=values,
-                driver_name=ORMUtils.get_driver_name(session.bind.engine),  # type: ignore
-            )
+        driver_name = ORMUtils.get_driver_name(session.bind.engine)  # type: ignore
 
-            session.execute(insert_stmt)
+        try:
+            match driver_name:
+                case "sqlite" | "postgresql":
+                    self._insert_or_update_by_stmt(session)
+                case _:
+                    return self._insert_or_update_not_support(session)
+
             session.commit()
 
             return True
