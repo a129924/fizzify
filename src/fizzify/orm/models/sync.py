@@ -130,6 +130,32 @@ class SyncBase(Base):
 
             raise e
 
+    def _insert_or_ignore_by_stmt(self, session: SqlAlchemySession) -> Literal[True]:
+        stmt = self._generate_statement(
+            "insert_or_ignore",
+            values=ORMUtils.get_field_and_value(self),
+            driver_name=ORMUtils.get_driver_name(session.bind.engine),  # type: ignore
+        )
+        session.execute(stmt)
+
+        return True
+
+    def _insert_or_ignore_not_support(
+        self, session: SqlAlchemySession
+    ) -> Literal[True]:
+        unique_fields = ORMUtils.get_unique_constraint_fields(self.__class__)
+        is_exists = self.find_one(
+            session,
+            filters=[
+                getattr(self.__class__, field) == getattr(self, field)
+                for field in unique_fields
+            ],
+        )
+        if is_exists is None:
+            self.save(session)
+
+        return True
+
     @override
     def insert_or_ignore(self, session: SqlAlchemySession) -> Literal[True]:
         """
@@ -138,14 +164,15 @@ class SyncBase(Base):
         Returns:
             bool: True if the insert or ignore was successful, False otherwise.
         """
+        driver_name = ORMUtils.get_driver_name(session.bind.engine)  # type: ignore
+
         try:
-            session.execute(
-                self._generate_statement(
-                    "insert_or_ignore",
-                    values=ORMUtils.get_field_and_value(self),
-                    driver_name=ORMUtils.get_driver_name(session.bind.engine),  # type: ignore
-                )
-            )
+            match driver_name:
+                case "sqlite" | "postgresql":
+                    self._insert_or_ignore_by_stmt(session)
+                case _:
+                    return self._insert_or_ignore_not_support(session)
+
             session.commit()
 
             return True
@@ -165,9 +192,6 @@ class SyncBase(Base):
         """
         values = ORMUtils.get_field_and_value(self)
 
-        # 打印 values 以進行調試
-        print(f"Values for insert_or_update: {values}")
-
         if not values:
             raise ValueError(
                 "The values dictionary must not be empty for insert_or_update."
@@ -179,7 +203,7 @@ class SyncBase(Base):
                 values=values,
                 driver_name=ORMUtils.get_driver_name(session.bind.engine),  # type: ignore
             )
-            print(f"Insert statement: {insert_stmt}")
+
             session.execute(insert_stmt)
             session.commit()
 
