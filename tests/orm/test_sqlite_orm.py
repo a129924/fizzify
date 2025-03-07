@@ -104,8 +104,10 @@ def test_sync_update(sync_session_manager: SyncSessionManager):
         user.save(session)
 
         user.update(session, filters=[User.name == "John"], values={"name": "Jane"})
+        updated_user = User.find_one(session, filters=[User.name == "Jane"])
 
-        assert user.name == "Jane"
+        assert updated_user is not None
+        assert updated_user.name == "Jane"
 
 
 def test_sync_delete(sync_session_manager: SyncSessionManager):
