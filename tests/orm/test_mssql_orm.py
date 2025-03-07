@@ -61,7 +61,7 @@ def test_drop_table(sync_session_manager: SyncSessionManager):
 
 
 def test_sql_name_is_mssql(sync_session_manager: SyncSessionManager):
-    assert ORMUtils.get_driver_name(sync_session_manager.engine) == "mssql+pyodbc"
+    assert ORMUtils.get_driver_name(sync_session_manager.engine) == "mssql"
 
 
 def test_sync_session(setup_database: Session):
