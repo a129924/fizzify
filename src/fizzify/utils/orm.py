@@ -48,7 +48,20 @@ class ORMUtils:
 
     @classmethod
     def get_driver_name(cls, engine: Engine | AsyncEngine) -> str:
-        return engine.url.drivername
+        """
+        Get the driver name from the engine.
+
+        Args:
+            engine: The engine to get the driver name from.
+
+        Returns:
+            The driver name from the engine.
+        For Example:
+            * mssql+pyodbc -> mssql
+            * postgresql -> postgresql
+            * sqlite -> sqlite
+        """
+        return engine.url.drivername.split("+", 1)[0]
 
     @classmethod
     def get_unique_constraint_fields(cls, model: type[DeclarativeBase]) -> list[str]:
