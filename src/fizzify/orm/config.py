@@ -2,7 +2,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 from sqlalchemy.engine.interfaces import IsolationLevel
-from typing_extensions import override
+from typing_extensions import Self, override
 
 
 class ORMEngineConfig(BaseModel):
@@ -38,15 +38,63 @@ class ORMEnginePostgresConfig(ORMEngineConfig):
     isolation_level: IsolationLevel = "SERIALIZABLE"
 
 
+class ORMEngineMssqlConfig(ORMEngineConfig):
+    """
+    Configuration for the SQL Server ORM.
+    """
+
+    isolation_level: IsolationLevel = "SERIALIZABLE"
+
+
 class ORMUrlBaseConfig(BaseModel):
     """Base class for ORM URL configuration."""
 
-    dialect: str
     database: str
 
     def generate_url(self) -> str:
         """Generate the URL for the ORM."""
         raise NotImplementedError
+
+
+class ORMSqlServerConfig(ORMUrlBaseConfig):
+    """
+    Configuration for the SQL Server ORM.
+    """
+
+    driver: str = "mssql"
+    engine: Literal["aioodbc", "pyodbc"] = "aioodbc"
+    database: str  # DB
+    user: str  # User
+    password: str  # Password
+    host: str  # IP
+    port: int  # Port
+    _schema: str  # Schema
+
+    @classmethod
+    def from_env(cls, path: str) -> Self:
+        from dotenv import dotenv_values
+
+        config = dotenv_values(path)
+
+        return cls(
+            engine=config["Engine"],  # type: ignore
+            host=config["IP"],  # type: ignore
+            port=int(config["Port"]),  # type: ignore
+            database=config["DB"],  # type: ignore
+            user=config["User"],  # type: ignore
+            password=config["Password"],  # type: ignore
+            _schema=config["Schema"],  # type: ignore
+        )
+
+    @override
+    def generate_url(self) -> str:
+        """
+        Generate the URL for the SQL Server ORM.
+
+        format:
+        driver+engine://user:password@host:port/database?driver=ODBC+Driver+17+for+SQL+Server
+        """
+        return f"{self.driver}+{self.engine}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}?driver=ODBC+Driver+17+for+SQL+Server"
 
 
 class ORMPostgresConfig(ORMUrlBaseConfig):
