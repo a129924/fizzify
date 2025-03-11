@@ -92,7 +92,7 @@ class ORMUtils:
 
     @classmethod
     def get_order_by_clause(
-        cls, model: DeclarativeBase, order_bys: Sequence[OrderBy]
+        cls, model: type[DeclarativeBase], order_bys: Sequence[OrderBy]
     ) -> Sequence[UnaryExpression[Any]]:
         return [
             getattr(getattr(model, order_by.column_name), order_by.direction)()

@@ -11,6 +11,7 @@ from sqlalchemy.sql.roles import ExpressionElementRole
 from typing_extensions import Self
 
 from ...utils.orm import ORMUtils
+from .._types import OrderBy
 
 
 class Base(DeclarativeBase):
@@ -35,17 +36,31 @@ class Base(DeclarativeBase):
     def _generate_statement(
         cls,
         mode: Literal[
-            "select", "update", "delete", "insert_or_ignore", "insert_or_update"
+            "select",
+            "update",
+            "delete",
+            "insert_or_ignore",
+            "insert_or_update",
+            "select_sorted",
         ],
         driver_name: str | None = None,
         filters: Sequence[ExpressionElementRole[bool]] | None = None,
         values: dict[_DMLColumnArgument, Any] | None = None,
+        order_by: Sequence[OrderBy] | None = None,
     ) -> Select | Update | Delete | Insert:
         match mode:
             case "select" if filters is not None:
                 from sqlalchemy import select
 
                 return select(cls).filter(*filters)
+            case "select_sorted" if filters is not None and order_by is not None:
+                from sqlalchemy import select
+
+                return (
+                    select(cls)
+                    .filter(*filters)
+                    .order_by(*ORMUtils.get_order_by_clause(cls, order_by))
+                )
             case "update" if values is not None and filters is not None:
                 from sqlalchemy import update
 
@@ -85,6 +100,15 @@ class Base(DeclarativeBase):
         filters: Sequence[ExpressionElementRole[bool]],
     ) -> Sequence[Self]:
         raise NotImplementedError("find_all should be overridden")
+
+    @classmethod
+    def find_all_sorted(
+        cls,
+        session: Session | AsyncSession,
+        filters: Sequence[ExpressionElementRole[bool]],
+        order_by: Sequence[ExpressionElementRole[bool]],
+    ) -> Sequence[Self]:
+        raise NotImplementedError("find_all_sorted should be overridden")
 
     def save(self, session: Session | AsyncSession) -> Self:
         raise NotImplementedError("save should be overridden")
