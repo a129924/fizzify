@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import Any
 
 from sqlalchemy import Engine, create_engine
@@ -11,7 +12,9 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from sqlalchemy.orm import Session as SqlAlchemySession
 from sqlalchemy.sql._typing import _DMLColumnArgument
 from sqlalchemy.sql.dml import Insert
+from sqlalchemy.sql.elements import UnaryExpression
 
+from ..orm._types import OrderBy
 from ..orm.config import ORMEngineConfig, ORMUrlBaseConfig
 
 
@@ -86,6 +89,15 @@ class ORMUtils:
             column.name: getattr(model, column.name)
             for column in model.__table__.columns
         }
+
+    @classmethod
+    def get_order_by_clause(
+        cls, model: DeclarativeBase, order_bys: Sequence[OrderBy]
+    ) -> Sequence[UnaryExpression[Any]]:
+        return [
+            getattr(getattr(model, order_by.column_name), order_by.direction)()
+            for order_by in order_bys
+        ]
 
     @classmethod
     def generate_insert_or_ignore_stmt(
