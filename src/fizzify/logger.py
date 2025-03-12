@@ -1,6 +1,16 @@
+from enum import IntEnum
 from logging import Formatter, Handler, Logger
 
 from typing_extensions import Self
+
+
+class Level(IntEnum):
+    INFO = 20
+    ERROR = 40
+    DEBUG = 10
+    CRITICAL = 50
+    WARNING = 30
+    NOTSET = 0
 
 
 class FizzifyLogger(Logger):
@@ -51,7 +61,12 @@ class FizzifyLogger(Logger):
 
         return self
 
-    def log(self, level: int, message: str):
+    def set_level(self, level: Level) -> Self:
+        self.logger.setLevel(level)
+
+        return self
+
+    def log(self, level: Level, message: str):
         self.logger.log(level, message)
 
     def info(self, message: str):
