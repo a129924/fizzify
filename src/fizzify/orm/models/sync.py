@@ -9,6 +9,7 @@ from sqlalchemy.sql.roles import ExpressionElementRole
 from typing_extensions import Self, override
 
 from ...utils.orm import ORMUtils
+from .._types import OrderBy
 from .base import Base
 
 
@@ -86,6 +87,21 @@ class SyncBase(Base):
         logging.info(f"Finding all {cls.__name__}")
 
         return cls._find(session, filters)
+
+    @classmethod
+    @override
+    def find_all_sorted(
+        cls,
+        session: SqlAlchemySession,
+        filters: Sequence[ExpressionElementRole[bool]],
+        order_by: Sequence[OrderBy],
+        limit: int | None = None,
+    ) -> Sequence[Self]:
+        stmt = cls._generate_statement(
+            "select_sorted", filters=filters, order_by=order_by
+        ).limit(limit)
+
+        return session.execute(stmt).scalars().all()
 
     @classmethod
     @override
