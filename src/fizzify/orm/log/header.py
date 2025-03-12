@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 
-class ORMLogHandler(Handler):
+class ORMLogBaseHandler(Handler):
     def __init__(self, session: Session | AsyncSession):
         super().__init__()
 
