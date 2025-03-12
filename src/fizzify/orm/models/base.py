@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Any, Literal
+from typing import Any, Literal, overload
 
 from sqlalchemy import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -33,7 +33,59 @@ class Base(DeclarativeBase):
         raise NotImplementedError("__delete_table__ should be overridden")
 
     @classmethod
+    @overload
     def _generate_statement(
+        cls,
+        mode: Literal["select"],
+        filters: Sequence[ExpressionElementRole[bool]],
+    ) -> Select[Any]: ...
+
+    @classmethod
+    @overload
+    def _generate_statement(
+        cls,
+        mode: Literal["select_sorted"],
+        filters: Sequence[ExpressionElementRole[bool]],
+        order_by: Sequence[OrderBy],
+    ) -> Select[Any]: ...
+
+    @classmethod
+    @overload
+    def _generate_statement(
+        cls,
+        mode: Literal["update"],
+        filters: Sequence[ExpressionElementRole[bool]],
+        values: dict[_DMLColumnArgument, Any],
+    ) -> Update: ...
+
+    @classmethod
+    @overload
+    def _generate_statement(
+        cls,
+        mode: Literal["delete"],
+        filters: Sequence[ExpressionElementRole[bool]],
+    ) -> Delete: ...
+
+    @classmethod
+    @overload
+    def _generate_statement(
+        cls,
+        mode: Literal["insert_or_ignore"],
+        driver_name: str,
+        values: dict[_DMLColumnArgument, Any],
+    ) -> Insert: ...
+
+    @classmethod
+    @overload
+    def _generate_statement(
+        cls,
+        mode: Literal["insert_or_update"],
+        driver_name: str,
+        values: dict[_DMLColumnArgument, Any],
+    ) -> Insert: ...
+
+    @classmethod
+    def _generate_statement(  # type: ignore
         cls,
         mode: Literal[
             "select",
@@ -47,7 +99,7 @@ class Base(DeclarativeBase):
         filters: Sequence[ExpressionElementRole[bool]] | None = None,
         values: dict[_DMLColumnArgument, Any] | None = None,
         order_by: Sequence[OrderBy] | None = None,
-    ) -> Select | Update | Delete | Insert:
+    ) -> Select[Any] | Update | Delete | Insert:
         match mode:
             case "select" if filters is not None:
                 from sqlalchemy import select
@@ -75,7 +127,6 @@ class Base(DeclarativeBase):
                     values,
                     driver_name=driver_name,
                 )
-
             case "insert_or_update" if values is not None and driver_name is not None:
                 return ORMUtils.generate_insert_or_update_stmt(
                     cls,
