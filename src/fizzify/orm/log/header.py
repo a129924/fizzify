@@ -1,14 +1,14 @@
 from logging import Handler, LogRecord
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
+from ...orm.session.asyncio import AsyncSessionManager
+from ...orm.session.sync import SyncSessionManager
 
 
 class ORMLogBaseHandler(Handler):
-    def __init__(self, session: Session | AsyncSession):
+    def __init__(self, session_manager: SyncSessionManager | AsyncSessionManager):
         super().__init__()
 
-        self.session = session
+        self.session_manager = session_manager
         self.__init_table__()
 
     def __init_table__(self):
