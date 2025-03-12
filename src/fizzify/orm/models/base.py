@@ -45,7 +45,7 @@ class Base(DeclarativeBase):
         cls,
         mode: Literal["select_sorted"],
         filters: Sequence[ExpressionElementRole[bool]],
-        order_by: UnaryExpression,
+        order_by: Sequence[UnaryExpression],
     ) -> Select[Any]: ...
 
     @classmethod
@@ -97,7 +97,7 @@ class Base(DeclarativeBase):
         driver_name: str | None = None,
         filters: Sequence[ExpressionElementRole[bool]] | None = None,
         values: dict[_DMLColumnArgument, Any] | None = None,
-        order_by: UnaryExpression | None = None,
+        order_by: Sequence[UnaryExpression] | None = None,
     ) -> Select[Any] | Update | Delete | Insert:
         match mode:
             case "select" if filters is not None:

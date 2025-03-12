@@ -94,7 +94,7 @@ class SyncBase(Base):
         cls,
         session: SqlAlchemySession,
         filters: Sequence[ExpressionElementRole[bool]],
-        order_by: UnaryExpression,
+        order_by: Sequence[UnaryExpression],
         limit: int | None = None,
     ) -> Sequence[Self]:
         stmt = cls._generate_statement(
