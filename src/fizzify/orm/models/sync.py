@@ -2,6 +2,7 @@ import logging
 from collections.abc import Sequence
 from typing import Any, Literal
 
+from sqlalchemy import UnaryExpression
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session as SqlAlchemySession
 from sqlalchemy.sql._typing import _DMLColumnArgument
@@ -9,7 +10,6 @@ from sqlalchemy.sql.roles import ExpressionElementRole
 from typing_extensions import Self, override
 
 from ...utils.orm import ORMUtils
-from .._types import OrderBy
 from .base import Base
 
 
@@ -94,7 +94,7 @@ class SyncBase(Base):
         cls,
         session: SqlAlchemySession,
         filters: Sequence[ExpressionElementRole[bool]],
-        order_by: Sequence[OrderBy],
+        order_by: UnaryExpression,
         limit: int | None = None,
     ) -> Sequence[Self]:
         stmt = cls._generate_statement(

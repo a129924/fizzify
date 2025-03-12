@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from typing import Any, Literal, overload
 
-from sqlalchemy import Engine
+from sqlalchemy import Engine, UnaryExpression
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import DeclarativeBase, Session
@@ -11,7 +11,6 @@ from sqlalchemy.sql.roles import ExpressionElementRole
 from typing_extensions import Self
 
 from ...utils.orm import ORMUtils
-from .._types import OrderBy
 
 
 class Base(DeclarativeBase):
@@ -46,7 +45,7 @@ class Base(DeclarativeBase):
         cls,
         mode: Literal["select_sorted"],
         filters: Sequence[ExpressionElementRole[bool]],
-        order_by: Sequence[OrderBy],
+        order_by: UnaryExpression,
     ) -> Select[Any]: ...
 
     @classmethod
@@ -98,7 +97,7 @@ class Base(DeclarativeBase):
         driver_name: str | None = None,
         filters: Sequence[ExpressionElementRole[bool]] | None = None,
         values: dict[_DMLColumnArgument, Any] | None = None,
-        order_by: Sequence[OrderBy] | None = None,
+        order_by: UnaryExpression | None = None,
     ) -> Select[Any] | Update | Delete | Insert:
         match mode:
             case "select" if filters is not None:
@@ -108,11 +107,7 @@ class Base(DeclarativeBase):
             case "select_sorted" if filters is not None and order_by is not None:
                 from sqlalchemy import select
 
-                return (
-                    select(cls)
-                    .filter(*filters)
-                    .order_by(*ORMUtils.get_order_by_clause(cls, order_by))
-                )
+                return select(cls).filter(*filters).order_by(*order_by)
             case "update" if values is not None and filters is not None:
                 from sqlalchemy import update
 
