@@ -18,7 +18,7 @@ class Base(DeclarativeBase):
 
     @declared_attr.directive
     def __tablename__(cls) -> str:
-        return cls.__name__.lower()
+        return cls._convert_class_name_to_table_name()
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}"
@@ -30,6 +30,12 @@ class Base(DeclarativeBase):
     @classmethod
     def __delete_table__(cls, engine: Engine | AsyncEngine) -> None:
         raise NotImplementedError("__delete_table__ should be overridden")
+
+    @classmethod
+    def _convert_class_name_to_table_name(cls) -> str:
+        from re import sub
+
+        return sub(r"(?<!^)(?=[A-Z])", "_", cls.__name__).lower()
 
     @classmethod
     @overload
