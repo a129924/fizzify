@@ -93,13 +93,16 @@ class SyncBase(Base):
     def find_all_sorted(
         cls,
         session: SqlAlchemySession,
-        filters: Sequence[ExpressionElementRole[bool]],
         order_by: Sequence[UnaryExpression],
+        filters: Sequence[ExpressionElementRole[bool]] | None = None,
         limit: int | None = None,
     ) -> Sequence[Self]:
         stmt = cls._generate_statement(
             "select_sorted", filters=filters, order_by=order_by
         ).limit(limit)
+
+        if filters:
+            stmt = stmt.filter(*filters)
 
         return session.execute(stmt).scalars().all()
 

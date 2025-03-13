@@ -50,8 +50,8 @@ class Base(DeclarativeBase):
     def _generate_statement(
         cls,
         mode: Literal["select_sorted"],
-        filters: Sequence[ExpressionElementRole[bool]],
         order_by: Sequence[UnaryExpression],
+        filters: Sequence[ExpressionElementRole[bool]] | None = None,
     ) -> Select[Any]: ...
 
     @classmethod
@@ -110,10 +110,10 @@ class Base(DeclarativeBase):
                 from sqlalchemy import select
 
                 return select(cls).filter(*filters)
-            case "select_sorted" if filters is not None and order_by is not None:
+            case "select_sorted" if order_by is not None:
                 from sqlalchemy import select
 
-                return select(cls).filter(*filters).order_by(*order_by)
+                return select(cls).order_by(*order_by)
             case "update" if values is not None and filters is not None:
                 from sqlalchemy import update
 
@@ -157,8 +157,8 @@ class Base(DeclarativeBase):
     def find_all_sorted(
         cls,
         session: Session | AsyncSession,
-        filters: Sequence[ExpressionElementRole[bool]],
         order_by: Sequence[ExpressionElementRole[bool]],
+        filters: Sequence[ExpressionElementRole[bool]] | None = None,
     ) -> Sequence[Self]:
         raise NotImplementedError("find_all_sorted should be overridden")
 
