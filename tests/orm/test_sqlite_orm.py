@@ -42,6 +42,11 @@ def sync_session_manager(
     return SyncSessionManager(config=sqlite_config, engine_config=sqlite_engine_config)
 
 
+def test_table_name_is_converted_to_lower(sync_session_manager: SyncSessionManager):
+    assert User.__tablename__ == "user"
+    assert UniqueUser.__tablename__ == "unique_user"
+
+
 def test_sql_name_is_sqlite(sync_session_manager: SyncSessionManager):
     assert ORMUtils.get_driver_name(sync_session_manager.engine) == "sqlite"
 
