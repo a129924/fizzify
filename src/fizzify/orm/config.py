@@ -86,6 +86,16 @@ class ORMSqlServerConfig(ORMUrlBaseConfig):
             _schema=config["Schema"],  # type: ignore
         )
 
+    def get_odbc_driver(self) -> str:
+        """Get the driver for the SQL Server ORM."""
+        from pyodbc import drivers
+
+        for driver in drivers():
+            if driver.endswith("SQL Server"):
+                return driver.replace(" ", "+")
+
+        raise ValueError("No SQL Server driver found")
+
     @override
     def generate_url(self) -> str:
         """
@@ -94,7 +104,7 @@ class ORMSqlServerConfig(ORMUrlBaseConfig):
         format:
         driver+engine://user:password@host:port/database?driver=ODBC+Driver+17+for+SQL+Server
         """
-        return f"{self.driver}+{self.engine}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}?driver=ODBC+Driver+17+for+SQL+Server"
+        return f"{self.driver}+{self.engine}://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}?driver={self.get_odbc_driver()}"
 
 
 class ORMPostgresConfig(ORMUrlBaseConfig):
