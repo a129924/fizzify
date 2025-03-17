@@ -90,11 +90,16 @@ class ORMSqlServerConfig(ORMUrlBaseConfig):
         )
 
     def get_odbc_driver(self) -> str:
-        """Get the driver for the SQL Server ORM."""
+        """
+        Get the driver for the SQL Server ORM.
+
+        drivers() = ['SQL Server', 'ODBC Driver 17 for SQL Server']
+        """
+
         from pyodbc import drivers
 
         for driver in drivers():
-            if driver.endswith("SQL Server"):
+            if driver.startswith("ODBC Driver") and driver.endswith("for sSQL Server"):
                 return driver.replace(" ", "+")
 
         raise ValueError("No SQL Server driver found")
