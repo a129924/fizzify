@@ -261,3 +261,22 @@ class SyncBase(Base):
             session.rollback()
 
             raise e
+
+    @classmethod
+    @override
+    def get_except(
+        cls,
+        session: SqlAlchemySession,
+        except_key1: str,
+        cls2: type["SyncBase"],
+        except_key2: str,
+    ) -> Sequence[Self]:
+        from sqlalchemy import except_, select
+
+        query1 = select(getattr(cls, except_key1))
+        query2 = select(getattr(cls2, except_key2))
+
+        stmt = except_(query1, query2)
+        print(str(stmt))
+
+        return session.execute(stmt).scalars().all()

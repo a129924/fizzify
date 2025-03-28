@@ -197,3 +197,13 @@ class Base(DeclarativeBase):
         values: dict[_DMLColumnArgument, Any],
     ) -> Literal[True]:
         raise NotImplementedError("insert_or_update should be overridden")
+
+    @classmethod
+    def get_except(
+        cls,
+        session: Session | AsyncSession,
+        except_key1: str,
+        cls2: type[Self],
+        except_key2: str,
+    ) -> Sequence[Self]:
+        raise NotImplementedError("get_except should be overridden")
