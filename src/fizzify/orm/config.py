@@ -44,9 +44,6 @@ class ORMEngineMssqlConfig(ORMEngineConfig):
     """
 
     isolation_level: IsolationLevel = "SERIALIZABLE"
-    TrustServerCertificate: str = "yes"
-    Encrypt: str = "no"
-    driver_unicode_results: str = "True"
 
 
 class ORMUrlBaseConfig(BaseModel):
