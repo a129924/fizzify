@@ -277,6 +277,5 @@ class SyncBase(Base):
         query2 = select(getattr(cls2, except_key2))
 
         stmt = except_(query1, query2)
-        print(str(stmt))
 
         return session.execute(stmt).scalars().all()
