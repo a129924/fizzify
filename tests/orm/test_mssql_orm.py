@@ -175,3 +175,23 @@ def test_unique_user_insert_or_update(setup_database: Session):
     )
     assert filter_user1 is not None
     assert filter_user1.age == 21
+
+
+def test_sync_get_except(setup_database: Session):
+    user = MssqlUser(name="John", age=20, created_at=datetime.now())
+    user.save(setup_database)
+
+    unique_user = MssqlUniqueUser(name="John", age=20, created_at=datetime.now())
+    unique_user2 = MssqlUniqueUser(name="Jane", age=21, created_at=datetime.now())
+    unique_user.save(setup_database)
+    unique_user2.save(setup_database)
+
+    except_users = MssqlUniqueUser.get_except(
+        setup_database,
+        except_key1="name",
+        cls2=MssqlUser,
+        except_key2="name",
+    )
+
+    assert len(except_users) == 1
+    assert except_users[0] == "Jane"

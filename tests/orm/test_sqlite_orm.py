@@ -170,3 +170,27 @@ def test_unique_user_insert_or_update(sync_session_manager: SyncSessionManager):
         filter_user1 = UniqueUser.find_one(session, filters=[UniqueUser.name == "John"])
         assert filter_user1 is not None
         assert filter_user1.age == 21
+
+
+def test_sync_get_except(sync_session_manager: SyncSessionManager):
+    unique_user = UniqueUser(name="John", age=20, created_at=datetime.now())
+    unique_user2 = UniqueUser(name="Jane", age=21, created_at=datetime.now())
+    user = User(name="John", age=20, created_at=datetime.now())
+
+    with sync_session_manager.get_session() as session:
+        unique_user.__create_table__(sync_session_manager.engine)
+        unique_user.save(session)
+        unique_user2.save(session)
+
+        user.__create_table__(sync_session_manager.engine)
+        user.save(session)
+
+        except_users = UniqueUser.get_except(
+            session,
+            except_key1="name",
+            cls2=User,
+            except_key2="name",
+        )
+
+        assert len(except_users) == 1
+        assert except_users[0] == "Jane"
