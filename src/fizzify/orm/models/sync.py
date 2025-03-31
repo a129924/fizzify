@@ -10,6 +10,12 @@ from sqlalchemy.sql.roles import ExpressionElementRole
 from typing_extensions import Self, override
 
 from ...utils.orm import ORMUtils
+from ..statement.options import (
+    DeleteOptions,
+    InsertOptions,
+    SelectOptions,
+    UpdateOptions,
+)
 from .base import Base
 
 
@@ -34,7 +40,11 @@ class SyncBase(Base):
     def _find(
         cls, session: SqlAlchemySession, filters: Sequence[ExpressionElementRole[bool]]
     ) -> Sequence[Self]:
-        stmt = cls._generate_statement("select", filters=filters)
+        stmt_generator = cls._get_statement_generator()
+        stmt = stmt_generator.generate(
+            model_class=cls,
+            options=SelectOptions(filters=filters),
+        )
 
         return session.execute(stmt).scalars().all()
 
@@ -45,7 +55,11 @@ class SyncBase(Base):
         filters: Sequence[ExpressionElementRole[bool]],
         values: dict[_DMLColumnArgument, Any],
     ) -> Literal[True]:
-        stmt = cls._generate_statement("update", filters=filters, values=values)
+        stmt_generator = cls._get_statement_generator()
+        stmt = stmt_generator.generate(
+            model_class=cls,
+            options=UpdateOptions(mode="update", filters=filters, values=values),
+        )
 
         session.execute(stmt)
         session.commit()
@@ -97,8 +111,12 @@ class SyncBase(Base):
         filters: Sequence[ExpressionElementRole[bool]] | None = None,
         limit: int | None = None,
     ) -> Sequence[Self]:
-        stmt = cls._generate_statement(
-            "select_sorted", filters=filters, order_by=order_by
+        stmt_generator = cls._get_statement_generator()
+        stmt = stmt_generator.generate(
+            model_class=cls,
+            options=SelectOptions(
+                mode="select_sorted", filters=filters, order_by=order_by
+            ),
         ).limit(limit)
 
         if filters:
@@ -139,7 +157,12 @@ class SyncBase(Base):
         logging.info(f"Deleting one {cls.__name__}")
 
         try:
-            session.execute(cls._generate_statement("delete", filters=filters))
+            stmt_generator = cls._get_statement_generator()
+            stmt = stmt_generator.generate(
+                model_class=cls,
+                options=DeleteOptions(mode="delete", filters=filters),
+            )
+            session.execute(stmt)
             session.commit()
 
             return True
@@ -150,10 +173,14 @@ class SyncBase(Base):
             raise e
 
     def _insert_or_ignore_by_stmt(self, session: SqlAlchemySession) -> Literal[True]:
-        stmt = self._generate_statement(
-            "insert_or_ignore",
-            values=ORMUtils.get_field_and_value(self),
-            driver_name=ORMUtils.get_driver_name(session.bind.engine),  # type: ignore
+        stmt_generator = self.__class__._get_statement_generator()
+        stmt = stmt_generator.generate(
+            model_class=self.__class__,
+            options=InsertOptions(
+                mode="insert_or_ignore",
+                values=ORMUtils.get_field_and_value(self),
+                driver_name=ORMUtils.get_driver_name(session.bind.engine),  # type: ignore
+            ),
         )
         session.execute(stmt)
 
@@ -202,10 +229,14 @@ class SyncBase(Base):
             raise e
 
     def _insert_or_update_by_stmt(self, session: SqlAlchemySession) -> Literal[True]:
-        stmt = self._generate_statement(
-            "insert_or_update",
-            values=ORMUtils.get_field_and_value(self),
-            driver_name=ORMUtils.get_driver_name(session.bind.engine),  # type: ignore
+        stmt_generator = self.__class__._get_statement_generator()
+        stmt = stmt_generator.generate(
+            model_class=self.__class__,
+            options=InsertOptions(
+                mode="insert_or_update",
+                values=ORMUtils.get_field_and_value(self),
+                driver_name=ORMUtils.get_driver_name(session.bind.engine),  # type: ignore
+            ),
         )
         session.execute(stmt)
 

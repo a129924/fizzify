@@ -7,6 +7,12 @@ from sqlalchemy.sql._typing import _DMLColumnArgument
 from sqlalchemy.sql.roles import ExpressionElementRole
 from typing_extensions import Self, override
 
+from ..statement.options import (
+    DeleteOptions,
+    InsertOptions,
+    SelectOptions,
+    UpdateOptions,
+)
 from .base import Base
 
 
@@ -27,7 +33,13 @@ class AsyncBase(Base):
     ) -> Sequence[Self]:
         logging.info(f"Finding {cls.__name__}")
 
-        instance = await session.execute(cls._generate_statement("select", filters))
+        stmt_generator = cls._get_statement_generator()
+        stmt = stmt_generator.generate(
+            model_class=cls,
+            options=SelectOptions(mode="select", filters=filters),
+        )
+
+        instance = await session.execute(stmt)
 
         return instance.scalars().all()
 
@@ -38,7 +50,11 @@ class AsyncBase(Base):
         filters: Sequence[ExpressionElementRole[bool]],
         values: dict[_DMLColumnArgument, Any],
     ) -> Literal[True]:
-        stmt = cls._generate_statement("update", filters, values)
+        stmt_generator = cls._get_statement_generator()
+        stmt = stmt_generator.generate(
+            model_class=cls,
+            options=UpdateOptions(mode="update", filters=filters, values=values),
+        )
 
         await session.execute(stmt)
         await session.commit()
@@ -93,6 +109,7 @@ class AsyncBase(Base):
             raise e
 
     @override
+    @classmethod
     async def delete_one(
         cls,
         session: AsyncSession,
@@ -101,7 +118,12 @@ class AsyncBase(Base):
         logging.info(f"Deleting one {cls.__name__}")
 
         try:
-            await session.execute(cls._generate_statement("delete", filters))
+            stmt_generator = cls._get_statement_generator()
+            stmt = stmt_generator.generate(
+                model_class=cls,
+                options=DeleteOptions(mode="delete", filters=filters),
+            )
+            await session.execute(stmt)
             await session.commit()
 
             return True
