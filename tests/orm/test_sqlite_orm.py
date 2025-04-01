@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from datetime import datetime
 
 from pytest import fixture
@@ -207,9 +208,8 @@ def test_sync_get_except(sync_session_manager: SyncSessionManager):
 
         except_users = FromSqliteUniqueUser.get_except(
             session,
-            except_key1="name",
-            cls2=FromSqliteUser,
-            except_key2="name",
+            keys1=[FromSqliteUniqueUser.name],
+            keys2=[FromSqliteUser.name],
         )
 
         assert len(except_users) == 1

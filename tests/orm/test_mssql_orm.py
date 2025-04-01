@@ -188,9 +188,8 @@ def test_sync_get_except(setup_database: Session):
 
     except_users = MssqlUniqueUser.get_except(
         setup_database,
-        except_key1="name",
-        cls2=MssqlUser,
-        except_key2="name",
+        keys1=[MssqlUniqueUser.name],
+        keys2=[MssqlUser.name],
     )
 
     assert len(except_users) == 1
