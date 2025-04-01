@@ -83,6 +83,25 @@ class SyncBase(Base):
         return self
 
     @classmethod
+    def insert_many(
+        cls, session: SqlAlchemySession, objects: Sequence[Self]
+    ) -> Literal[True]:
+        """
+        Insert multiple objects into the database.
+
+        Returns:
+            bool: True if the insert was successful, False otherwise.
+        """
+        try:
+            session.add_all(objects)
+            session.commit()
+
+            return True
+        except Exception as e:
+            session.rollback()
+            raise e
+
+    @classmethod
     @override
     def find_one(
         cls,
