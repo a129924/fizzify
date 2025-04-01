@@ -17,6 +17,7 @@ class BaseOptions:
         "delete",
         "insert_or_ignore",
         "insert_or_update",
+        "except",
     ]
 
 
@@ -46,3 +47,10 @@ class UpdateOptions:  # UPDATE
 class DeleteOptions:  # DELETE
     filters: Sequence[ExpressionElementRole[bool]]
     mode: Literal["delete"] = "delete"
+
+
+@dataclass
+class ExceptOptions:
+    keys1: Sequence[InstrumentedAttribute[Any]]
+    keys2: Sequence[InstrumentedAttribute[Any]]
+    mode: Literal["except"] = "except"

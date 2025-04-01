@@ -4,6 +4,7 @@ from typing import Any, Literal
 
 from sqlalchemy import UnaryExpression
 from sqlalchemy.engine import Engine
+from sqlalchemy.orm import InstrumentedAttribute
 from sqlalchemy.orm import Session as SqlAlchemySession
 from sqlalchemy.sql._typing import _DMLColumnArgument
 from sqlalchemy.sql.roles import ExpressionElementRole
@@ -12,6 +13,7 @@ from typing_extensions import Self, override
 from ...utils.orm import ORMUtils
 from ..statement.options import (
     DeleteOptions,
+    ExceptOptions,
     InsertOptions,
     SelectOptions,
     UpdateOptions,
@@ -298,15 +300,13 @@ class SyncBase(Base):
     def get_except(
         cls,
         session: SqlAlchemySession,
-        except_key1: str,
-        cls2: type["SyncBase"],
-        except_key2: str,
+        keys1: list[InstrumentedAttribute[Any]],
+        keys2: list[InstrumentedAttribute[Any]],
     ) -> Sequence[Self]:
-        from sqlalchemy import except_, select
-
-        query1 = select(getattr(cls, except_key1))
-        query2 = select(getattr(cls2, except_key2))
-
-        stmt = except_(query1, query2)
+        stmt_generator = cls._get_statement_generator()
+        stmt = stmt_generator.generate(
+            model_class=cls,
+            options=ExceptOptions(keys1=keys1, keys2=keys2),
+        )
 
         return session.execute(stmt).scalars().all()

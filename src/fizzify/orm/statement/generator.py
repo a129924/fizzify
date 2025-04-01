@@ -2,8 +2,15 @@ from typing import Any, Generic, TypeVar, overload
 
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.sql import Delete, Insert, Select, Update
+from sqlalchemy.sql.selectable import CompoundSelect
 
-from .options import DeleteOptions, InsertOptions, SelectOptions, UpdateOptions
+from .options import (
+    DeleteOptions,
+    ExceptOptions,
+    InsertOptions,
+    SelectOptions,
+    UpdateOptions,
+)
 
 ModelClass = TypeVar("ModelClass", bound=DeclarativeBase)
 
@@ -110,6 +117,27 @@ class StatementGenerator(Generic[ModelClass]):
                 )
 
     @classmethod
+    def _generate_except_statement(
+        cls,
+        options: ExceptOptions,
+    ) -> CompoundSelect[Any]:
+        """
+        Generate an except statement.
+
+        Args:
+            options: The options for the except statement.
+
+        Returns:
+            The except statement.
+        """
+        from sqlalchemy import except_, select
+
+        query1 = select(*options.keys1)
+        query2 = select(*options.keys2)
+
+        return except_(query1, query2)
+
+    @classmethod
     @overload
     def generate(
         cls,
@@ -182,11 +210,29 @@ class StatementGenerator(Generic[ModelClass]):
         """
 
     @classmethod
+    @overload
     def generate(
         cls,
         model_class: type[ModelClass],
+        options: ExceptOptions,
+    ) -> CompoundSelect[Any]:
+        """
+        Generate an except statement.
+
+        Args:
+            model_class: The model class to except from.
+            options: The options for the except statement.
+
+        Returns:
+            The except statement.
+        """
+
+    @classmethod
+    def generate(  # type: ignore
+        cls,
+        model_class: type[ModelClass],
         options: DeleteOptions | InsertOptions | SelectOptions | UpdateOptions,
-    ) -> Select[Any] | Update | Delete | Insert:
+    ) -> Select[Any] | Update | Delete | Insert | CompoundSelect[Any]:
         """
         Generate a statement.
 
@@ -206,3 +252,5 @@ class StatementGenerator(Generic[ModelClass]):
                 return cls._generate_select_statement(model_class, options)
             case UpdateOptions():
                 return cls._generate_update_statement(model_class, options)
+            case ExceptOptions():
+                return cls._generate_except_statement(options)
