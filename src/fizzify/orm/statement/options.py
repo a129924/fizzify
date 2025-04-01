@@ -53,5 +53,6 @@ class DeleteOptions:  # DELETE
 class ExceptOptions:
     keys1: Sequence[InstrumentedAttribute[Any]]
     keys2: Sequence[InstrumentedAttribute[Any]]
-    filters: Sequence[ExpressionElementRole[bool]] | None = None
+    filters1: Sequence[ExpressionElementRole[bool]] | None = None
+    filters2: Sequence[ExpressionElementRole[bool]] | None = None
     mode: Literal["except"] = "except"
