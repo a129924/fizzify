@@ -135,6 +135,10 @@ class StatementGenerator(Generic[ModelClass]):
         query1 = select(*options.keys1)
         query2 = select(*options.keys2)
 
+        if options.filters is not None:
+            query1 = query1.filter(*options.filters)
+            query2 = query2.filter(*options.filters)
+
         return except_(query1, query2)
 
     @classmethod
