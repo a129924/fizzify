@@ -213,3 +213,21 @@ def test_sync_get_except(sync_session_manager: SyncSessionManager):
 
         assert len(except_users) == 1
         assert except_users[0] == "Jane"
+
+
+def test_sync_insert_many(sync_session_manager: SyncSessionManager):
+    users = [
+        FromSqliteUser(name="John", age=20, created_at=datetime.now()),
+        FromSqliteUser(name="Jane", age=21, created_at=datetime.now()),
+    ]
+
+    with sync_session_manager.get_session() as session:
+        users[0].__create_table__(sync_session_manager.engine)
+
+        is_successes = FromSqliteUser.insert_many(session, users)
+        assert is_successes
+
+        found_users = FromSqliteUser.find_all(session)
+        assert len(found_users) == 2
+        assert found_users[0] == users[0]
+        assert found_users[1] == users[1]
