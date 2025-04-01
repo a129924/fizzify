@@ -304,11 +304,12 @@ class SyncBase(Base):
         session: SqlAlchemySession,
         keys1: list[InstrumentedAttribute[Any]],
         keys2: list[InstrumentedAttribute[Any]],
+        filters: Sequence[ExpressionElementRole[bool]] | None = None,
     ) -> Sequence[Self]:
         stmt_generator = cls._get_statement_generator()
         stmt = stmt_generator.generate(
             model_class=cls,
-            options=ExceptOptions(keys1=keys1, keys2=keys2),
+            options=ExceptOptions(keys1=keys1, keys2=keys2, filters=filters),
         )
 
         return session.execute(stmt).scalars().all()
