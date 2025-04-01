@@ -40,7 +40,9 @@ class SyncBase(Base):
 
     @classmethod
     def _find(
-        cls, session: SqlAlchemySession, filters: Sequence[ExpressionElementRole[bool]]
+        cls,
+        session: SqlAlchemySession,
+        filters: Sequence[ExpressionElementRole[bool]] | None = None,
     ) -> Sequence[Self]:
         stmt_generator = cls._get_statement_generator()
         stmt = stmt_generator.generate(
@@ -85,7 +87,7 @@ class SyncBase(Base):
     def find_one(
         cls,
         session: SqlAlchemySession,
-        filters: Sequence[ExpressionElementRole[bool]],
+        filters: Sequence[ExpressionElementRole[bool]] | None = None,
     ) -> Self | None:
         logging.info(f"Finding one {cls.__name__}")
 
@@ -98,7 +100,7 @@ class SyncBase(Base):
     def find_all(
         cls,
         session: SqlAlchemySession,
-        filters: Sequence[ExpressionElementRole[bool]],
+        filters: Sequence[ExpressionElementRole[bool]] | None = None,
     ) -> Sequence[Self]:
         logging.info(f"Finding all {cls.__name__}")
 
