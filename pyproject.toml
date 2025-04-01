@@ -40,6 +40,10 @@ dev = [
     "pytest-mock>=3.14.0",
     "pytest>=8.3.4",
 ]
+[tool.pytest.ini_options]
+pythonpath = ["."]  # 設置 pythonpath
+python_files = ["test_*.py"]  # 設置測試文件的命名規則
+
 [tool.ruff.lint]
 select = [
     "E",  # pycodestyle errors
