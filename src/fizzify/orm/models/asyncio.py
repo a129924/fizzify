@@ -76,6 +76,7 @@ class AsyncBase(Base):
         return self
 
     @override
+    @classmethod
     async def find_one(
         cls, session: AsyncSession, filters: Sequence[ExpressionElementRole[bool]]
     ) -> Self | None:
@@ -86,6 +87,7 @@ class AsyncBase(Base):
         return results[0] if results else None
 
     @override
+    @classmethod
     async def find_all(
         cls, session: AsyncSession, filters: Sequence[ExpressionElementRole[bool]]
     ) -> Sequence[Self]:
@@ -94,6 +96,7 @@ class AsyncBase(Base):
         return await cls._find(session, filters)
 
     @override
+    @classmethod
     async def update(
         cls,
         session: AsyncSession,
