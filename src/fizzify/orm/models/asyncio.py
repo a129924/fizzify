@@ -75,6 +75,21 @@ class AsyncBase(Base):
 
         return self
 
+    @classmethod
+    async def insert_many(
+        cls, session: AsyncSession, objects: Sequence[Self]
+    ) -> Literal[True]:
+        logging.info(f"Inserting many {cls.__name__}")
+
+        try:
+            session.add_all(objects)
+            await session.commit()
+
+            return True
+        except Exception as e:
+            await session.rollback()
+            raise e
+
     @override
     @classmethod
     async def find_one(
