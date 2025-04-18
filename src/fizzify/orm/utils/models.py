@@ -15,3 +15,13 @@ async def async_create_tables(
 ) -> None:
     for table in tables:
         await table.__create_table__(engine)
+
+
+def sync_drop_tables(engine: Engine, tables: list[type[SyncBase]]) -> None:
+    for table in tables:
+        table.__delete_table__(engine)
+
+
+async def async_drop_tables(engine: AsyncEngine, tables: list[type[AsyncBase]]) -> None:
+    for table in tables:
+        await table.__delete_table__(engine)

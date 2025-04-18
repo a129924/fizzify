@@ -28,6 +28,13 @@ class AsyncBase(Base):
             await conn.run_sync(cls.metadata.create_all)
 
     @classmethod
+    @override
+    async def __delete_table__(cls, engine: AsyncEngine) -> None:
+        logging.info(f"Deleting table for {cls.__name__}")
+        async with engine.begin() as conn:
+            await conn.run_sync(cls.metadata.drop_all)
+
+    @classmethod
     async def _find(
         cls, session: AsyncSession, filters: Sequence[ExpressionElementRole[bool]]
     ) -> Sequence[Self]:
