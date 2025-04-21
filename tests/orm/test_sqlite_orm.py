@@ -231,3 +231,19 @@ def test_sync_insert_many(sync_session_manager: SyncSessionManager):
         assert len(found_users) == 2
         assert found_users[0] == users[0]
         assert found_users[1] == users[1]
+
+
+def test_sync_fast_insert_many(sync_session_manager: SyncSessionManager):
+    users = [
+        {"name": "John", "age": 20, "created_at": datetime.now()},
+        {"name": "Jane", "age": 21, "created_at": datetime.now()},
+    ]
+
+    with sync_session_manager.get_session() as session:
+        FromSqliteUniqueUser.__create_table__(sync_session_manager.engine)
+
+        is_successes = FromSqliteUser.fast_insert_many(session, users)
+        assert is_successes
+
+        found_users = FromSqliteUser.find_all(session)
+        assert len(found_users) == 2

@@ -194,3 +194,18 @@ def test_sync_get_except(setup_database: Session):
 
     assert len(except_users) == 1
     assert except_users[0] == "Jane"
+
+
+def test_insert_many_fast(sync_session_manager: SyncSessionManager):
+    users = [
+        {"name": "John", "age": 20, "created_at": datetime.now()},
+        {"name": "Jane", "age": 21, "created_at": datetime.now()},
+    ]
+
+    with sync_session_manager.get_session() as session:
+        MssqlUser.__create_table__(sync_session_manager.engine)
+        is_successes = MssqlUser.fast_insert_many(session, users)
+        assert is_successes
+
+        found_users = MssqlUser.find_all(session)
+        assert len(found_users) == 2
