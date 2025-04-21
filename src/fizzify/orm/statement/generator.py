@@ -94,7 +94,7 @@ class StatementGenerator(Generic[ModelClass]):
         Generate an insert statement.
 
         Args:
-            model_instance: The model instance to insert into.
+            model_class: The model class to insert into.
             options: The options for the insert statement.
 
         Returns:
@@ -167,7 +167,7 @@ class StatementGenerator(Generic[ModelClass]):
     @overload
     def generate(
         cls,
-        model_class: ModelClass,
+        model_class: type[ModelClass],
         options: InsertOptions,
     ) -> Insert:
         """
@@ -236,10 +236,14 @@ class StatementGenerator(Generic[ModelClass]):
         """
 
     @classmethod
-    def generate(  # type: ignore
+    def generate(
         cls,
         model_class: type[ModelClass],
-        options: DeleteOptions | InsertOptions | SelectOptions | UpdateOptions,
+        options: DeleteOptions
+        | InsertOptions
+        | SelectOptions
+        | UpdateOptions
+        | ExceptOptions,
     ) -> Select[Any] | Update | Delete | Insert | CompoundSelect[Any]:
         """
         Generate a statement.
