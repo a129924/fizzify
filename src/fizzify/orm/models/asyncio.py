@@ -83,6 +83,7 @@ class AsyncBase(Base):
         return self
 
     @classmethod
+    @override
     async def insert_many(
         cls, session: AsyncSession, objects: Sequence[Self]
     ) -> Literal[True]:
@@ -90,6 +91,24 @@ class AsyncBase(Base):
 
         try:
             session.add_all(objects)
+            await session.commit()
+
+            return True
+        except Exception as e:
+            await session.rollback()
+            raise e
+
+    @classmethod
+    @override
+    async def fast_insert_many(
+        cls, session: AsyncSession, objects: list[dict[str, Any]]
+    ) -> Literal[True]:
+        logging.info(f"Fast inserting many {cls.__name__}")
+
+        try:
+            from sqlalchemy import insert
+
+            await session.execute(insert(cls).values(objects))
             await session.commit()
 
             return True

@@ -70,6 +70,7 @@ class SyncBase(Base):
 
         return True
 
+    @override
     def save(self, session: SqlAlchemySession) -> Self:
         try:
             logging.info(f"Saving {self.__class__.__name__}")
@@ -83,6 +84,7 @@ class SyncBase(Base):
         return self
 
     @classmethod
+    @override
     def insert_many(
         cls, session: SqlAlchemySession, objects: Sequence[Self]
     ) -> Literal[True]:
@@ -94,6 +96,20 @@ class SyncBase(Base):
         """
         try:
             session.add_all(objects)
+            session.commit()
+
+            return True
+        except Exception as e:
+            session.rollback()
+            raise e
+
+    @classmethod
+    @override
+    def fast_insert_many(
+        cls, session: SqlAlchemySession, objects: list[dict[str, Any]]
+    ) -> Literal[True]:
+        try:
+            session.bulk_insert_mappings(cls, objects)  # type: ignore
             session.commit()
 
             return True

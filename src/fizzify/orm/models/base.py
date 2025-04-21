@@ -84,6 +84,22 @@ class Base(DeclarativeBase):
         raise NotImplementedError("save should be overridden")
 
     @classmethod
+    def insert_many(
+        cls,
+        session: Session | AsyncSession,
+        objects: Sequence[Self],
+    ) -> Literal[True]:
+        raise NotImplementedError("insert_many should be overridden")
+
+    @classmethod
+    def fast_insert_many(
+        cls,
+        session: Session | AsyncSession,
+        objects: Sequence[dict[str, Any]],
+    ) -> Literal[True]:
+        raise NotImplementedError("fast_insert_many should be overridden")
+
+    @classmethod
     def update(
         cls,
         session: Session | AsyncSession,
