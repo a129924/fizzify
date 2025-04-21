@@ -31,7 +31,7 @@ def mssql_config() -> ORMSqlServerConfig:
 
 @fixture
 def mssql_engine_config() -> ORMEngineMssqlConfig:
-    return ORMEngineMssqlConfig()
+    return ORMEngineMssqlConfig(isolation_level="READ COMMITTED")
 
 
 @fixture
