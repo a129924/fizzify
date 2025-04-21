@@ -94,7 +94,7 @@ class StatementGenerator(Generic[ModelClass]):
         Generate an insert statement.
 
         Args:
-            model_class: The model class to insert into.
+            model_instance: The model instance to insert into.
             options: The options for the insert statement.
 
         Returns:
@@ -108,12 +108,14 @@ class StatementGenerator(Generic[ModelClass]):
                     model_class,
                     options.values,
                     driver_name=options.driver_name,
+                    index_elements=options.index_elements,
                 )
             case "insert_or_update":
                 return ORMUtils.generate_insert_or_update_stmt(
                     model_class,
                     options.values,
                     driver_name=options.driver_name,
+                    index_elements=options.index_elements,
                 )
 
     @classmethod
@@ -165,7 +167,7 @@ class StatementGenerator(Generic[ModelClass]):
     @overload
     def generate(
         cls,
-        model_class: type[ModelClass],
+        model_class: ModelClass,
         options: InsertOptions,
     ) -> Insert:
         """

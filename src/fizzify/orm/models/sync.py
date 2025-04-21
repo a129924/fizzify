@@ -201,6 +201,7 @@ class SyncBase(Base):
             model_class=self.__class__,
             options=InsertOptions(
                 mode="insert_or_ignore",
+                index_elements=self.conflict_fields,
                 values=ORMUtils.get_field_and_value(self),
                 driver_name=ORMUtils.get_driver_name(session.bind.engine),  # type: ignore
             ),
@@ -257,6 +258,7 @@ class SyncBase(Base):
             model_class=self.__class__,
             options=InsertOptions(
                 mode="insert_or_update",
+                index_elements=self.conflict_fields,
                 values=ORMUtils.get_field_and_value(self),
                 driver_name=ORMUtils.get_driver_name(session.bind.engine),  # type: ignore
             ),

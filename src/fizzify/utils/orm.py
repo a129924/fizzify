@@ -105,6 +105,7 @@ class ORMUtils:
         model: type[DeclarativeBase],
         values: dict[_DMLColumnArgument, Any],
         driver_name: str,
+        index_elements: set[str],
     ) -> Insert:
         from sqlalchemy import insert
 
@@ -113,8 +114,10 @@ class ORMUtils:
                 return insert(model).values(values).prefix_with("OR IGNORE")
 
             case "postgresql":
-                return insert(model).values(
-                    index_elements=ORMUtils.get_unique_constraint_fields(model)
+                return (
+                    insert(model)
+                    .values(index_elements=index_elements)
+                    .prefix_with("OR IGNORE")
                 )
             case _:
                 raise ValueError(f"Unsupported database: {driver_name}")
@@ -125,6 +128,7 @@ class ORMUtils:
         model: type[DeclarativeBase],
         values: dict[_DMLColumnArgument, Any],
         driver_name: str,
+        index_elements: set[str],
     ) -> Insert:
         match driver_name:
             case "sqlite":
@@ -132,16 +136,17 @@ class ORMUtils:
 
                 stmt = insert(model).values(values)
                 return stmt.on_conflict_do_update(  # type: ignore
-                    index_elements=ORMUtils.get_unique_constraint_fields(model),
+                    index_elements=index_elements,
                     set_=values,
                 )
 
             case "postgresql":
                 from sqlalchemy.dialects.postgresql import insert
 
-                stmt = insert(model).values()
+                stmt = insert(model).values(index_elements=index_elements)
                 return stmt.on_conflict_do_update(  # type: ignore
-                    index_elements=ORMUtils.get_unique_constraint_fields(model)
+                    index_elements=index_elements,
+                    set_=values,
                 )
 
             case _:

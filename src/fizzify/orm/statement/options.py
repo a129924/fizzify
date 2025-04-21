@@ -24,6 +24,7 @@ class BaseOptions:
 @dataclass
 class InsertOptions:  # CREATE
     values: dict[_DMLColumnArgument, Any]
+    index_elements: set[str]
     mode: Literal["insert_or_ignore", "insert_or_update"] = "insert_or_ignore"
     driver_name: Literal["sqlite", "postgresql", "mysql"] = "sqlite"
 

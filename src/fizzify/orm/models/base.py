@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from functools import cached_property
 from typing import Any, Literal
 
 from sqlalchemy import Engine
@@ -39,6 +40,20 @@ class Base(DeclarativeBase):
     @classmethod
     def _get_statement_generator(cls) -> type[StatementGenerator[Self]]:
         return StatementGenerator[Self]
+
+    @cached_property
+    def conflict_fields(self) -> set[str]:
+        from sqlalchemy import inspect
+
+        from ...utils.orm import ORMUtils
+
+        class_ = self.__class__
+
+        return {
+            column.name
+            for column in inspect(class_).columns
+            if column.primary_key is True or column.unique is True
+        } | set(ORMUtils.get_unique_constraint_fields(class_))
 
     @classmethod
     def find_one(
@@ -85,19 +100,15 @@ class Base(DeclarativeBase):
     ) -> Literal[True]:
         raise NotImplementedError("delete_one should be, overridden")
 
-    @classmethod
     def insert_or_ignore(
-        cls,
+        self,
         session: Session | AsyncSession,
-        values: dict[_DMLColumnArgument, Any],
     ) -> Literal[True]:
         raise NotImplementedError("insert_or_ignore should be overridden")
 
-    @classmethod
     def insert_or_update(
-        cls,
+        self,
         session: Session | AsyncSession,
-        values: dict[_DMLColumnArgument, Any],
     ) -> Literal[True]:
         raise NotImplementedError("insert_or_update should be overridden")
 
