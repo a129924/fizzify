@@ -298,6 +298,7 @@ class SyncBase(Base):
             self.save(session)
         else:
             session.merge(self)
+            session.commit()
 
         return True
 
