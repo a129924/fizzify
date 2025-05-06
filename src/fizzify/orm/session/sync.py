@@ -38,10 +38,24 @@ class SyncSessionManager(BaseManager):
         """
         logging.info(f"Getting session for {self.config.database}")
 
-        session = ORMUtils.get_sync_session(self.engine)()
+        session = self.create_session()
         try:
             yield session
         finally:
             logging.info(f"Closing session for {self.config.database}")
 
-            session.close()
+            self.close_session(session)
+
+    @override
+    def create_session(self) -> Session:
+        """
+        Create a new session.
+        """
+        return ORMUtils.get_sync_session(self.engine)()
+
+    @override
+    def close_session(self, session: Session):
+        """
+        Close the session.
+        """
+        session.close()

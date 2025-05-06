@@ -29,11 +29,25 @@ class AsyncSessionManager(BaseManager):
     async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
         logging.info(f"Getting session for {self.config.database}")
 
-        async_session = ORMUtils.get_async_session(self.engine)()
+        async_session = await self.create_session()
 
         try:
             yield async_session
         finally:
             logging.info(f"Closing session for {self.config.database}")
 
-            await async_session.close()
+            await self.close_session(async_session)
+
+    @override
+    async def create_session(self) -> AsyncSession:
+        """
+        Create a new session.
+        """
+        return ORMUtils.get_async_session(self.engine)()
+
+    @override
+    async def close_session(self, async_session: AsyncSession):
+        """
+        Close the session.
+        """
+        await async_session.close()

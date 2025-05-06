@@ -20,3 +20,9 @@ class BaseManager:
 
     def get_session(self):
         raise NotImplementedError("This method should be overridden.")
+
+    def create_session(self):
+        raise NotImplementedError("This method should be overridden.")
+
+    def close_session(self):
+        raise NotImplementedError("This method should be overridden.")
