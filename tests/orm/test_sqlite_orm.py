@@ -1,13 +1,21 @@
 from datetime import datetime
+from enum import Enum as PyEnum
+from uuid import UUID, uuid4
 
 from pytest import fixture
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import Enum, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.pool.impl import QueuePool
 
 from src.fizzify.orm.config import ORMEngineSqliteConfig, ORMSqliteConfig
 from src.fizzify.orm.models.sync import SyncBase
 from src.fizzify.orm.session.sync import SyncSessionManager
 from src.fizzify.utils.orm import ORMUtils
+
+
+class TestEnum(PyEnum):
+    DEFAULT = "default"
+    SECOND = "second"
 
 
 class FromSqliteUser(SyncBase):
@@ -23,10 +31,21 @@ class FromSqliteUniqueUser(SyncBase):
     __table_args__ = (UniqueConstraint("name"),)
 
 
+class FromSqliteHaveDefaultAndEnumUser(SyncBase):
+    id: Mapped[UUID] = mapped_column(default=uuid4, primary_key=True)
+    name: Mapped[str] = mapped_column(primary_key=True)
+    age: Mapped[int] = mapped_column(default=20)
+    created_at: Mapped[datetime] = mapped_column(default=datetime.now)
+    null_date: Mapped[datetime | None] = mapped_column(nullable=True, default=None)
+    enum_field: Mapped[TestEnum] = mapped_column(
+        Enum(TestEnum), default=TestEnum.DEFAULT
+    )
+
+
 @fixture
 def sqlite_config() -> ORMSqliteConfig:
     return ORMSqliteConfig(
-        database=":memory:",
+        database="./test.db",
     )
 
 
@@ -40,6 +59,25 @@ def sync_session_manager(
     sqlite_config: ORMSqliteConfig, sqlite_engine_config: ORMEngineSqliteConfig
 ) -> SyncSessionManager:
     return SyncSessionManager(config=sqlite_config, engine_config=sqlite_engine_config)
+
+
+@fixture
+def sync_pool(sync_session_manager: SyncSessionManager) -> QueuePool:
+    pool = sync_session_manager.engine.pool
+    assert isinstance(pool, QueuePool)
+
+    return pool
+
+
+def test_pool_is_sqlite(sync_pool: QueuePool):
+    assert isinstance(sync_pool, QueuePool)
+    assert sync_pool._dialect.name == "sqlite"  # type: ignore
+
+
+def test_pool_size(sync_pool: QueuePool):
+    assert hasattr(sync_pool, "size")
+    assert sync_pool.size() == 10
+    assert sync_pool.checkedout() == 0
 
 
 def test_table_name_is_converted_to_lower(sync_session_manager: SyncSessionManager):
@@ -247,3 +285,28 @@ def test_sync_fast_insert_many(sync_session_manager: SyncSessionManager):
 
         found_users = FromSqliteUser.find_all(session)
         assert len(found_users) == 2
+
+
+def test_sync_many_enum_field(sync_session_manager: SyncSessionManager):
+    users = [
+        {"name": "John", "enum_field": TestEnum.DEFAULT},
+        {"name": "Jane", "enum_field": "second"},
+    ]
+
+    with sync_session_manager.get_session() as session:
+        FromSqliteHaveDefaultAndEnumUser.__create_table__(sync_session_manager.engine)
+        FromSqliteHaveDefaultAndEnumUser.fast_insert_many(session, users)
+
+        found_user = FromSqliteHaveDefaultAndEnumUser.find_one(
+            session, filters=[FromSqliteHaveDefaultAndEnumUser.name == "John"]
+        )
+        assert found_user is not None
+        assert found_user.enum_field == TestEnum.DEFAULT
+        assert found_user.age == 20
+
+        # found_user2 = FromSqliteHaveDefaultAndEnumUser.find_one(
+        #     session, filters=[FromSqliteHaveDefaultAndEnumUser.name == "Jane"]
+        # )
+        # assert found_user2 is not None
+        # assert found_user2.enum_field == TestEnum.SECOND
+        # assert found_user2.age == 20
