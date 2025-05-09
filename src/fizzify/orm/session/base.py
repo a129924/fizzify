@@ -1,7 +1,9 @@
 from functools import cached_property
+from typing import Literal
 
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.pool.impl import QueuePool
 
 from ..config import ORMEngineConfig, ORMUrlBaseConfig
 
@@ -25,4 +27,17 @@ class BaseManager:
         raise NotImplementedError("This method should be overridden.")
 
     def close_session(self):
+        raise NotImplementedError("This method should be overridden.")
+
+    @cached_property
+    def pool(self) -> QueuePool:
+        return self.engine.pool  # type: ignore
+
+    def is_all_finished(self) -> bool:
+        return self.pool.checkedout() == 0
+
+    def wait_all_finished(self) -> Literal[True]:
+        raise NotImplementedError("This method should be overridden.")
+
+    def close(self, force: bool = False):
         raise NotImplementedError("This method should be overridden.")

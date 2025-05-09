@@ -2,6 +2,7 @@ import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from functools import cached_property
+from typing import Literal
 
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from typing_extensions import override
@@ -51,3 +52,25 @@ class AsyncSessionManager(BaseManager):
         Close the session.
         """
         await async_session.close()
+
+    @override
+    async def wait_all_finished(self) -> Literal[True]:
+        """
+        Wait for all sessions to finish.
+        """
+        from asyncio import sleep
+
+        while not self.is_all_finished():
+            await sleep(0.1)
+
+        return True
+
+    @override
+    async def close(self, force: bool = False):
+        """
+        Close the engine.
+        """
+        if force:
+            await self.wait_all_finished()
+
+        await self.engine.dispose()

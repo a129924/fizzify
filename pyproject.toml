@@ -4,7 +4,7 @@ build-backend = "pdm.backend"
 
 [project]
 name = "fizzify"
-version = "0.4.9"
+version = "0.5.0"
 description = "Default template for PDM package"
 authors = [
     {name = "a129924", email = "a129924@gmail.com"},

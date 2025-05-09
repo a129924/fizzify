@@ -2,6 +2,7 @@ import logging
 from collections.abc import Generator
 from contextlib import contextmanager
 from functools import cached_property
+from typing import Literal
 
 from sqlalchemy import Engine
 from sqlalchemy.orm import Session
@@ -59,3 +60,25 @@ class SyncSessionManager(BaseManager):
         Close the session.
         """
         session.close()
+
+    @override
+    def wait_all_finished(self) -> Literal[True]:
+        """
+        Wait for all sessions to finish.
+        """
+        from time import sleep
+
+        while not self.is_all_finished():
+            sleep(0.1)
+
+        return True
+
+    @override
+    def close(self, force: bool = False):
+        """
+        Close the engine.
+        """
+        if force:
+            self.wait_all_finished()
+
+        self.engine.dispose()
