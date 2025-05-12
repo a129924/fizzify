@@ -5,7 +5,38 @@ from sqlalchemy.engine.interfaces import IsolationLevel
 from typing_extensions import Self, override
 
 
-class ORMEngineConfig(BaseModel):
+class ORMConfig(BaseModel):
+    """Base class for ORM configuration."""
+
+    @classmethod
+    def from_env(cls, path: str) -> Self:
+        from dotenv import dotenv_values
+
+        config = dotenv_values(path)
+
+        return cls(**config)
+
+    @classmethod
+    def from_json(cls, path: str) -> Self:
+        with open(path, encoding="utf-8") as f:
+            from json import load
+
+            config = load(f)
+
+        return cls(**config)
+
+    @classmethod
+    def from_file(cls, path: str) -> Self:
+        if path.endswith(".json"):
+            return cls.from_json(path)
+        elif path.endswith(".env"):
+            return cls.from_env(path)
+        else:
+            raise ValueError(f"Unsupported file extension: {path}")
+
+
+# ORM Engine Config
+class ORMEngineConfig(ORMConfig, BaseModel):
     connect_args: dict[str, Any] | None = None
     echo: bool = False
     pool_size: int = 10
@@ -46,7 +77,7 @@ class ORMEngineMssqlConfig(ORMEngineConfig):
     isolation_level: IsolationLevel = "SERIALIZABLE"
 
 
-class ORMUrlBaseConfig(BaseModel):
+class ORMUrlBaseConfig(ORMConfig, BaseModel):
     """Base class for ORM URL configuration."""
 
     database: str
@@ -54,6 +85,9 @@ class ORMUrlBaseConfig(BaseModel):
     def generate_url(self) -> str:
         """Generate the URL for the ORM."""
         raise NotImplementedError
+
+
+# ORM URL Config By SqlAlchemy
 
 
 class ORMSqlServerConfig(ORMUrlBaseConfig):
@@ -71,6 +105,7 @@ class ORMSqlServerConfig(ORMUrlBaseConfig):
     _schema: str  # Schema
 
     @classmethod
+    @override
     def from_env(cls, path: str) -> Self:
         from dotenv import dotenv_values
 
