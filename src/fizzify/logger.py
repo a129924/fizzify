@@ -1,5 +1,5 @@
 from enum import IntEnum
-from logging import Formatter, Handler, Logger
+from logging import Filter, Formatter, Handler, Logger
 
 from typing_extensions import Self
 
@@ -18,6 +18,7 @@ class FizzifyLogger(Logger):
         self.logger = self.get_logger(logger)
 
         self._handler: Handler | None = None
+        self._handlers: list[Handler] = []
 
     @classmethod
     def get_logger(cls, logger: Logger | str = __name__) -> Logger:
@@ -30,24 +31,24 @@ class FizzifyLogger(Logger):
 
     @property
     def handler(self) -> Handler:
-        if self._handler is None:
+        if not self._handlers:
             raise RuntimeError("No handler set")
 
-        return self._handler
+        return self._handlers[-1]
 
     @handler.setter
     def handler(self, handler: Handler):
-        self._handler = handler
+        self._handlers.append(handler)
 
     def set_handler(self, handler: Handler) -> Self:
         self.logger.addHandler(handler)
-        self._handler = handler
+        self._handlers.append(handler)
 
         return self
 
     def remove_handler(self) -> Self:
         self.logger.removeHandler(self.handler)
-        self._handler = None
+        self._handlers.pop()
 
         return self
 
@@ -58,6 +59,16 @@ class FizzifyLogger(Logger):
 
     def remove_formatter(self) -> Self:
         self.handler.setFormatter(None)
+
+        return self
+
+    def set_filter(self, filter: Filter) -> Self:
+        self.handler.addFilter(filter)
+
+        return self
+
+    def remove_filter(self) -> Self:
+        self.handler.removeFilter(self.handler.filters[-1])
 
         return self
 
