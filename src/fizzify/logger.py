@@ -1,5 +1,6 @@
 from enum import IntEnum
 from logging import Filter, Formatter, Handler, Logger
+from typing import Any
 
 from typing_extensions import Self
 
@@ -77,23 +78,52 @@ class FizzifyLogger(Logger):
 
         return self
 
-    def log(self, level: Level, message: str):
-        self.logger.log(level, message)
+    def log(
+        self,
+        level: Level,
+        message: str,
+        extra: dict[str, Any] | None = None,
+    ):
+        self.logger.log(level, message, extra=extra)
 
-    def info(self, message: str):
-        self.logger.info(message)
+    def info(
+        self,
+        message: str,
+        extra: dict[str, Any] | None = None,
+    ):
+        self.logger.info(message, extra=extra)
 
-    def debug(self, message: str):
-        self.logger.debug(message)
+    def debug(
+        self,
+        message: str,
+        extra: dict[str, Any] | None = None,
+    ):
+        self.logger.debug(message, extra=extra)
 
-    def warning(self, message: str):
-        self.logger.warning(message)
+    def warning(
+        self,
+        message: str,
+        extra: dict[str, Any] | None = None,
+    ):
+        self.logger.warning(message, extra=extra)
 
-    def error(self, message: str):
-        self.logger.error(message)
+    def error(
+        self,
+        message: str,
+        extra: dict[str, Any] | None = None,
+    ):
+        self.logger.error(message, extra=extra)
 
-    def critical(self, message: str):
-        self.logger.critical(message)
+    def critical(
+        self,
+        message: str,
+        extra: dict[str, Any] | None = None,
+    ):
+        self.logger.critical(message, extra=extra)
 
-    def exception(self, message: str):
-        self.logger.exception(message)
+    def exception(
+        self,
+        message: str,
+        extra: dict[str, Any] | None = None,
+    ):
+        self.logger.exception(message, extra=extra)
